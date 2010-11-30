@@ -1,0 +1,2 @@
+service=WMS&bbox=8.34765625,45.65346875,9.59434375,46.28253125&styles=&format=image/jpeg&info_format=text/plain&request=GetFeatureInfo&Srs=EPSG:4326&layers=sitinet:laghi&query_layers=sitinet:laghi&width=654&height=330&x=324&y=164
+

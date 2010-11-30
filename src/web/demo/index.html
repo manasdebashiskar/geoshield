@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>OpenLayers map preview</title>
+        <!-- Import OL CSS, auto import does not work with our minified OL.js build -->
+        <link rel="stylesheet" type="text/css" href="openlayers/theme/default/style.css"/>
+        <!-- Basic CSS definitions -->
+        <style type="text/css">
+            /* General settings */
+            body {
+                font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+                font-size: small;
+            }
+            /* Toolbar styles */
+            #toolbar {
+                position: relative;
+                padding-bottom: 0.5em;
+                display: none;
+            }
+
+            #toolbar ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            #toolbar ul li {
+                float: left;
+                padding-right: 1em;
+                padding-bottom: 0.5em;
+            }
+
+            #toolbar ul li a {
+                font-weight: bold;
+                font-size: smaller;
+                vertical-align: middle;
+                color: black;
+                text-decoration: none;
+            }
+
+            #toolbar ul li a:hover {
+                text-decoration: underline;
+            }
+
+            #toolbar ul li * {
+                vertical-align: middle;
+            }
+
+            /* The map and the location bar */
+            #map {
+                clear: both;
+                position: relative;
+                width: 596px;
+                height: 550px;
+                border: 1px solid black;
+            }
+
+            #wrapper {
+                width: 596px;
+            }
+
+            #location {
+                float: right;
+            }
+
+            #options {
+                position: absolute;
+                left: 13px;
+                top: 7px;
+                z-index: 3000;
+            }
+
+        </style>
+
+        <link rel="stylesheet" type="text/css" href="../ext/resources/css/ext-all.css" />
+        <!-- GC -->
+        <!-- LIBS -->
+        <script type="text/javascript" src="../ext/adapter/ext/ext-base.js"></script>
+        <!-- ENDLIBS -->
+
+        <script type="text/javascript" src="../ext/ext-all.js"></script>
+        <script type="text/javascript" src="../ext/ext-all-debug.js"></script>
+
+        <!-- Import OpenLayers, reduced, wms read only version -->
+        <script src="openlayers/OpenLayers.js" type="text/javascript">
+        </script>
+        <script defer="defer" type="text/javascript">
+            var map;
+            var untiled;
+            var tiled;
+            var wfs;
+            
+            // pink tile avoidance
+            OpenLayers.IMAGE_RELOAD_ATTEMPTS = 5;
+            // make OL compute scale according to WMS spec
+            OpenLayers.DOTS_PER_INCH = 25.4 / 0.28;
+
+            function login(){
+                Ext.Msg.progress("Loading","checking user","Authentication");
+                Ext.Ajax.request({
+                    url: '../login',
+                    success: function(result, request){
+                        //console.log("Accesso garantito");
+                        init();
+                        Ext.Msg.hide();
+                    },
+                    failure:  function(result, request) {
+                        Ext.Msg.show({
+                            title:'403 Access denied',
+                            msg: "Please contact the administrator",
+                            buttons: Ext.Msg.YESNO,
+                            fn: function(btn, text){
+                                if (btn == 'yes'){
+                                    login();
+                                }else{
+                                    window.location="../index.html";
+                                }
+                            },
+                            icon: Ext.MessageBox.QUESTION
+                        });
+                    }
+                });
+            };
+
+            function init(){
+                format = 'image/png';
+                var bounds =new OpenLayers.Bounds(145.51045,-44.0,149.0,-40.5);
+                var options = {
+                    controls: [],
+                    maxExtent: bounds,
+                    maxResolution: 0.00539853359375,
+                    projection: "EPSG:4326",
+                    units: 'degrees'
+                };
+                map = new OpenLayers.Map('map', options);
+
+                tiled = new OpenLayers.Layer.WMS(
+                "GeoShield Test - Tiled", "../wms/demo",
+                {
+                    width: '596',
+                    srs: 'EPSG:4326',
+                    layers: 'topp:tasmania_state_boundaries,topp:tasmania_water_bodies,topp:tasmania_roads',
+                    height: '550',
+                    styles: '',
+                    format: format,
+                    tiled: 'true'
+                },
+                {buffer: 0}
+            );
+
+                var saveStrategy = new OpenLayers.Strategy.Save();
+
+                wfs = new OpenLayers.Layer.Vector("WFS", {
+                    strategies: [new OpenLayers.Strategy.BBOX()],//,saveStrategy],
+                    projection: new OpenLayers.Projection("EPSG:4326"),
+                    protocol: new OpenLayers.Protocol.WFS({
+                        url: "../wfs/demo",
+                        version: "1.1.0",
+                        srsName: "EPSG:4326",
+                        featureNS: "http://www.openplans.org/topp",
+                        featurePrefix: 'topp',
+                        featureType: "tasmania_cities",
+                        geometryName: "the_geom",
+                        schema: "http://localhost:80/geoserver/wfs/DescribeFeatureType?version=1.1.0&typename=topp:tasmania_cities"
+                    })
+                });
+
+                // setup single tiled layer
+                untiled = new OpenLayers.Layer.WMS(
+                "GeoShield Test - Untiled", "../wms/demo",
+                {
+                    width: '596',
+                    srs: 'EPSG:4326',
+                    layers: 'topp:tasmania_state_boundaries,topp:tasmania_water_bodies,topp:tasmania_roads',
+                    height: '550',
+                    styles: '',
+                    format: format
+                },
+                {singleTile: true, ratio: 1}
+            );
+                
+                var draw = new OpenLayers.Control.DrawFeature(
+                wfs, OpenLayers.Handler.Polygon,
+                {
+                    title: "Draw Feature",
+                    displayClass: "olControlDrawFeaturePolygon",
+                    multi: true
+                }
+            );
+
+                map.addLayers([untiled, tiled,wfs]);
+                //map.addLayers([wfs]);
+
+                // build up all controls
+                map.addControl(new OpenLayers.Control.PanZoom({
+                    position: new OpenLayers.Pixel(2, 15)
+                }));
+                map.addControl(new OpenLayers.Control.Navigation());
+                //map.addControl(new OpenLayers.Control.Scale($('scale')));
+                map.addControl(new OpenLayers.Control.MousePosition({element: $('location')}));
+                map.zoomToExtent(bounds);
+
+                // wire up the option button
+                /*var options = document.getElementById("options");
+                options.onclick = toggleControlPanel;*/
+
+                // support GetFeatureInfo
+                map.events.register('click', map, function (e) {
+                    document.getElementById('nodelist').innerHTML = "Loading... please wait...";
+                    var params = {
+                        REQUEST: "GetFeatureInfo",
+                        EXCEPTIONS: "application/vnd.ogc.se_xml",
+                        BBOX: map.getExtent().toBBOX(),
+                        X: e.xy.x,
+                        Y: e.xy.y,
+                        INFO_FORMAT: 'text/html',
+                        QUERY_LAYERS: 'topp:tasmania_cities',
+                        FEATURE_COUNT: 50,
+                        Srs: 'EPSG:4326',
+                        Layers: 'topp:tasmania_cities',
+                        Styles: '',
+                        SERVICE: "WMS",
+                        WIDTH: map.size.w,
+                        HEIGHT: map.size.h,
+                        format: format};
+                    //updateFeatureInfoFilters(params);
+                    OpenLayers.loadURL("../wms/demo", params, this, setHTML, setHTML);
+                    OpenLayers.Event.stop(e);
+                });
+            }
+
+            // sets the HTML provided into the nodelist element
+            function setHTML(response){
+                document.getElementById('nodelist').innerHTML = response.responseText;
+            };
+
+        </script>
+    </head>
+    <body onload="login()">
+        <table>
+            <tr>
+                <td>
+
+                    <div id="map"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div id="wrapper">
+                        <div id="location">location</div>
+                        <div id="scale">
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div id="nodelist">
+                        <em>Click on the map to get feature info</em>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </body>
+
+</html>

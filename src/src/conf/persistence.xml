@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.0" xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+  <persistence-unit name="GeoshieldPU" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <exclude-unlisted-classes>false</exclude-unlisted-classes>
+    <shared-cache-mode>NONE</shared-cache-mode>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://10.0.7.14:5432/geoshield2"/>
+      <property name="javax.persistence.jdbc.password" value="SHh8riftaCT"/>
+      <property name="javax.persistence.jdbc.user" value="geoshield"/>
+      <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+      <property name="eclipselink.jdbc.read-connections.max" value="50"/> 
+      <property name="eclipselink.jdbc.read-connections.shared" value="true"/>
+      <property name="eclipselink.jdbc.write-connections.max" value="5"/>
+      <property name="eclipselink.jdbc.write-connections.min" value="2"/>
+      <property name="eclipselink.logging.level" value="OFF"/>
+      <property name="eclipselink.cache.type.default" value="NONE"/>
+      <property name="eclipselink.cache.shared" value="true"/>
+    </properties>
+  </persistence-unit>
+</persistence>
