@@ -65,17 +65,25 @@ import javax.persistence.UniqueConstraint;
 })
 public class Groups implements Serializable {
     private static final long serialVersionUID = 1L;
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
     @Column(name = "id_grp", nullable = false)
     private Integer idGrp;
+
     @Column(name = "name_grp", length = 100)
     private String nameGrp;
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "idGrpFk", fetch=FetchType.EAGER)
     private List<LayersPermissions> layersPermissionsCollection;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "idGrpFk", fetch=FetchType.EAGER)
+    private List<OfferingsPermissions> offeringsPermissions;
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "idGrpFk", fetch=FetchType.EAGER)
     private List<GroupsUsers> groupsUsersCollection;
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "idGrpFk", fetch=FetchType.EAGER)
     private List<ServicesPermissions> servicesPermissionsCollection;
 
@@ -115,6 +123,14 @@ public class Groups implements Serializable {
 
     public void setLayersPermissionsCollection(List<LayersPermissions> layersPermissionsCollection) {
         this.layersPermissionsCollection = layersPermissionsCollection;
+    }
+
+    public List<OfferingsPermissions> getOfferingsPermissions() {
+        return offeringsPermissions;
+    }
+
+    public void setOfferingsPermissions(List<OfferingsPermissions> offeringsPermissions) {
+        this.offeringsPermissions = offeringsPermissions;
     }
 
     public List<GroupsUsers> getGroupsUsersCollection() {

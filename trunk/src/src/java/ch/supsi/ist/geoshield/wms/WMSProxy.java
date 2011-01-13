@@ -25,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package ch.supsi.ist.geoshield.wms;
 
 import ch.supsi.ist.geoshield.data.DataManager;
@@ -66,10 +65,9 @@ public class WMSProxy extends HttpServlet {
     /*
     @Override
     public void init(ServletConfig config) throws ServletException {
-        super.init(config);
-        //config.getServletContext().setAttribute("name", "Faisal Khan");
+    super.init(config);
+    //config.getServletContext().setAttribute("name", "Faisal Khan");
     }*/
-
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -114,12 +112,14 @@ public class WMSProxy extends HttpServlet {
                 }
                 postMethod.setRequestBody(data);
 
+                /*
                 NameValuePair[] p = postMethod.getParameters();
                 //System.out.println(" -  - - - - - getParameters - -- - - - - - - -");
                 for (int i = 0; i < p.length; i++) {
-                    NameValuePair n = p[i];
-                    //System.out.println(n.getName() + ": " + n.getValue());
+                NameValuePair n = p[i];
+                //System.out.println(n.getName() + ": " + n.getValue());
                 }
+                 */
 
                 // Execute the request
                 postMethod.setFollowRedirects(false);
