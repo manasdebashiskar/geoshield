@@ -109,6 +109,9 @@ public class ServicesUrls implements Serializable {
     private List<Layers> layersCollection;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "idSurFk")
+    private List<Offerings> offerings;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "idSurFk")
     private List<ServicesPermissions> servicesPermissionsCollection;
 
     public ServicesUrls() {
@@ -178,6 +181,14 @@ public class ServicesUrls implements Serializable {
 
     public void setLayersCollection(List<Layers> layersCollection) {
         this.layersCollection = layersCollection;
+    }
+
+    public List<Offerings> getOfferings() {
+        return offerings;
+    }
+
+    public void setOfferings(List<Offerings> offerings) {
+        this.offerings = offerings;
     }
 
     public List<ServicesPermissions> getServicesPermissionsCollection() {

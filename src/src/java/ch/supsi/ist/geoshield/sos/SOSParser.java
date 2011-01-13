@@ -31,6 +31,8 @@ package ch.supsi.ist.geoshield.sos;
 import ch.supsi.ist.geoshield.exception.ServiceException;
 import ch.supsi.ist.geoshield.parser.OGCParser;
 import ch.supsi.ist.geoshield.shields.RequestWrapper;
+import ch.supsi.ist.geoshield.utils.Utility;
+import java.util.HashMap;
 
 /**
  * @author Milan Antonovic, Massimiliano Cannata - Istituto Scienze della Terra, SUPSI
@@ -38,9 +40,42 @@ import ch.supsi.ist.geoshield.shields.RequestWrapper;
 
 public class SOSParser  extends OGCParser {
 
+    public static String _PRM_SERVICE = "SERVICE";
+    public static String _PRM_REQUEST = "REQUEST";
+    public static String _PRM_VERSION = "VERSION";
+
     @Override
     public Object parseGet(RequestWrapper request) throws ServiceException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        System.out.println(" > SOSParser");
+        HashMap<String, String[]> kvp = (HashMap<String, String[]>) request.getParameterMap();
+        HashMap<String, String> ret = new HashMap<String, String>();
+
+        for (String s : kvp.keySet()) {
+            String[] tmp = kvp.get(s);
+            if (tmp.length == 1) {
+                ret.put(s.toUpperCase(), tmp[0].toUpperCase());
+                System.out.println("  > " + s.toUpperCase() + "=" + tmp[0].toUpperCase());
+            } else {
+                throw new ServiceException("Parameter name '" + s + "' can not be redundant.");
+            }
+        }
+
+        if (ret.get(_PRM_SERVICE) == null) {
+            // @todo set the exception in a throwable object that will be thrown after dataManager is closed
+            throw new ServiceException("Parameter name '" + _PRM_SERVICE + "' is mandatory.");
+        }
+        
+        if (ret.get(_PRM_REQUEST) == null) {
+            throw new ServiceException("Parameter name '" + _PRM_REQUEST + "' is mandatory.");
+        }
+
+        if (!ret.get(_PRM_REQUEST).equalsIgnoreCase("GETCAPABILITIES")) {
+            if (ret.get(_PRM_VERSION) == null || !ret.get(_PRM_VERSION).equalsIgnoreCase("1.0.0")) {
+                throw new ServiceException("Geoshield support SOS version 1.0.0");
+            }
+        }
+
+        return ret;
     }
 
     @Override

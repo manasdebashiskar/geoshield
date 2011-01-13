@@ -119,7 +119,6 @@ public class WFSShield implements Filter {
 
         AuthorityManager am = new AuthorityManager();
 
-
         Requests reqs = null;
         if (obj != null && !(obj instanceof net.opengis.wfs.GetCapabilitiesType)) {
 
@@ -217,7 +216,6 @@ public class WFSShield implements Filter {
                         + " PATH '" + path + "'.", ServiceException.SERVICE_AUTHENTICATION);
             }
         }
-
     }
 
     private void handleGetRequest(RequestWrapper request, ResponseWrapper response) throws IOException, ServiceException {

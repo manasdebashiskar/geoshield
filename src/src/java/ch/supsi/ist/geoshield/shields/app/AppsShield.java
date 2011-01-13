@@ -84,6 +84,8 @@ public class AppsShield implements Filter {
             System.out.println("\n********************* FILTER: AppsShield (Before processing) *****************");
         }
 
+
+        // Deprecated
         String vpath = Utility.getVpath(req);
 
         if (debug) {

@@ -5,9 +5,14 @@
     <exclude-unlisted-classes>false</exclude-unlisted-classes>
     <shared-cache-mode>NONE</shared-cache-mode>
     <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/geoshield"/>
+      <property name="javax.persistence.jdbc.password" value="postgres"/>
+      <property name="javax.persistence.jdbc.user" value="postgres"/>
+      <!--
       <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://10.0.7.14:5432/geoshield2"/>
       <property name="javax.persistence.jdbc.password" value="SHh8riftaCT"/>
       <property name="javax.persistence.jdbc.user" value="geoshield"/>
+      -->
       <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
       <property name="eclipselink.jdbc.read-connections.max" value="50"/> 
       <property name="eclipselink.jdbc.read-connections.shared" value="true"/>

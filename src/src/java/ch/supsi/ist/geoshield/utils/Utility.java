@@ -25,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package ch.supsi.ist.geoshield.utils;
 
 import ch.supsi.ist.geoshield.exception.ServiceException;
@@ -33,17 +32,17 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.httpclient.NameValuePair;
 
 /**
  * @author Milan Antonovic, Massimiliano Cannata - Istituto Scienze della Terra, SUPSI
  */
-
 public class Utility {
 
     static String PACKAGE = "ch.supsi.ist.interceptor.data.";
@@ -73,31 +72,34 @@ public class Utility {
         }
     }
 
-    public static String getGeoShieldUrl(javax.servlet.http.HttpServletRequest req){
-        // http://hostname.com:80/mywebapp/servlet/MyServlet/a/b;c=123?d=789
-        
-        String scheme = req.getScheme(); // http
-        String serverName = req.getServerName(); // hostname.com
-        int serverPort = req.getServerPort(); // 80
-        String contextPath = req.getContextPath(); // /mywebapp
-        //String servletPath = req.getServletPath(); // /servlet/MyServlet
-        //String pathInfo = req.getPathInfo(); // /a/b;c=123
-        //String queryString = req.getQueryString(); // d=789
-
-        // Reconstruct original requesting URL
-        //String url = scheme+"://"+serverName+":"+serverPort+contextPath+servletPath;
-
-        return scheme+"://"+serverName+":"+serverPort+contextPath;
+    public static NameValuePair[] getNameValuePairArray(javax.servlet.http.HttpServletRequest request) {
+        Enumeration paramNames = request.getParameterNames();
+        List<NameValuePair> nvp = new ArrayList<NameValuePair>();
+        while (paramNames.hasMoreElements()) {
+            String paramName = (String) paramNames.nextElement();
+            String[] paramValues = request.getParameterValues(paramName);
+            for (int i = 0; i < paramValues.length; i++) {
+                nvp.add(new NameValuePair(paramName, paramValues[i]));
+            }
+        }
+        NameValuePair[] data = new NameValuePair[nvp.size()];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = nvp.get(i);
+        }
+        return data;
     }
 
+    public static String getGeoShieldUrl(javax.servlet.http.HttpServletRequest req) {
+        String scheme = req.getScheme();
+        String serverName = req.getServerName();
+        int serverPort = req.getServerPort();
+        String contextPath = req.getContextPath();
+        return scheme + "://" + serverName + ":" + serverPort + contextPath;
+    }
+
+    @Deprecated
     public static String getVpath(javax.servlet.http.HttpServletRequest req) {
-        //System.out.println("\ngetVpath: ");
-        //System.out.println(req.getRequestURI());
-        //System.out.println(req.getRequestURI().replaceFirst("/apps/", ""));
         String[] arr = req.getRequestURI().replaceFirst("/istShield/apps/", "").split("/");
-        /*for (int i = 0; i < arr.length; i++) {
-        System.out.println(" - "+arr[i]);
-        }*/
         String ret = null;
         if (arr.length > 0) {
             ret = arr[0];
@@ -105,25 +107,19 @@ public class Utility {
         return ret;
     }
 
+    @Deprecated
     public static String getCompleteVpath(javax.servlet.http.HttpServletRequest req) {
-        //System.out.println("\ngetVpath: ");
-        //System.out.println(req.getRequestURI());
-        //System.out.println(req.getRequestURI().replaceFirst("/apps/", ""));
         String[] arr = req.getRequestURI().split("/");
-        /*for (int i = 0; i < arr.length; i++) {
-        System.out.println(" "+ i + ". " +arr[i]);
-        }*/
         String ret = "/";
         if (arr.length >= 3) {
             ret = "/" + arr[1] + "/" + arr[2] + "/" + arr[3] + "/";
-            //System.out.println(" getCompleteVpath ------------ > Returning: " + ret);
         }
         return ret;
     }
 
     public static StringBuffer getText(HttpURLConnection conn) {
         try {
-            System.out.println("Response code = " + conn.getResponseCode());
+            int rc = conn.getResponseCode();
             String s = "";
             StringBuffer html = new StringBuffer();
             try {
