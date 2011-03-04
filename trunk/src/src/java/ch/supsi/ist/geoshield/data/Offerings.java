@@ -5,6 +5,7 @@
 
 package ch.supsi.ist.geoshield.data;
 
+import flexjson.JSON;
 import java.io.Serializable;
 import java.util.List;
 import javax.persistence.Basic;
@@ -46,6 +47,10 @@ public class Offerings implements Serializable {
     @Column(name = "name_off", nullable = false, length = 50)
     private String nameOff;
 
+    @Basic(optional = true)
+    @Column(name = "desc_off", nullable = true, length = 100)
+    private String descOff;
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "idOffFk")
     private List<OfferingsPermissions> offeringsPermissionsList;
 
@@ -79,6 +84,19 @@ public class Offerings implements Serializable {
 
     public void setNameOff(String nameOff) {
         this.nameOff = nameOff;
+    }
+
+    public String getDescOff() {
+        return descOff;
+    }
+
+    public void setDescOff(String descOff) {
+        this.descOff = descOff;
+    }
+
+    @JSON
+    public List<OfferingsPermissions> getOffPerList() {
+        return offeringsPermissionsList;
     }
 
     public List<OfferingsPermissions> getOfferingsPermissionsList() {

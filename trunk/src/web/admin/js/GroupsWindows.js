@@ -726,8 +726,18 @@ MyDesktop.ComplexGroupFormWindow = Ext.extend(Ext.app.Module, {
 
 
             var layGrid = new GeoShield.Layers.Grid({
-                tbar:[addLay,remLay,editLay,sync] 
+                tbar:[addLay,remLay,editLay,sync]
             });
+
+
+            var sync = new Ext.Button({
+                text:'Sync',
+                tooltip:'Syncronize database with service',
+                iconCls:'world',
+                disabled: false
+            });
+
+            
             var layForm = new GeoShield.LayersPermissions.Form();
 
             layGrid.on('rowclick',
@@ -1044,11 +1054,141 @@ MyDesktop.ComplexGroupFormWindow = Ext.extend(Ext.app.Module, {
                 width       : 280,
                 items       :[layGrid]
             });
-            
             // *****************************************************************
             // Layers Permissions Panel - END
             // *****************************************************************
 
+            // *****************************************************************
+            // SOS Offerings Permissions Panel - START
+            // *****************************************************************
+
+            var sosCb = new GeoShield.ServicesUrls.SOSCB();
+
+            var sosComboPan = new Ext.Panel({
+                region      : 'north',
+                split       : false,
+                layout      : 'fit',
+                collapsible : false,
+                height      : 35,
+                items       : [
+                new Ext.FormPanel({
+                    labelWidth: 150, // label settings here cascade unless overridden
+                    bodyStyle:'padding:5px 5px 0',
+                    width: 300,
+                    frame: false,
+                    defaultType: 'textfield',
+                    border:false,
+                    defaults: {
+                        width: 200
+                    },
+                    items: [sosCb]
+                })
+                ]
+            });
+
+            sosCb.on("select",
+                function(combo, record, index ){
+                    var idSur = record.get("idSur");
+                    GeoShield.Offerings.Store.load("idSur;"+idSur);
+                });
+
+            var sosGrid = new GeoShield.Offerings.Grid(
+            {
+                tbar:[
+                new Ext.Button({
+                    text:'Add',
+                    tooltip:'Add an offering manually',
+                    iconCls:'add',
+                    disabled: false,
+                    listeners: {
+                        'click': {
+                            fn: function(e, t){
+                                var module = MyDesktop.getModule('simple-layers-form-win');
+                                if(module){
+                                    module.createWindow();
+                                }
+                            }
+                        }
+                    }
+                }),
+                new Ext.Button({
+                    text:'Rem',
+                    tooltip:'Remove the selected offering',
+                    iconCls:'remove',
+                    disabled: true
+                }),
+                new Ext.Button({
+                    text:'Edit',
+                    tooltip:'Modify selected offering',
+                    iconCls:'option',
+                    disabled: true
+                }),
+                new Ext.Button({
+                    text:'Sync',
+                    tooltip:'Syncronize database with service',
+                    iconCls:'world',
+                    disabled: false
+                })
+                ]
+            });
+
+
+            sosGrid.getSelectionModel().on('evToggleChecked',
+                function( rowIndex, c){
+                    var record = GeoShield.Offerings.Store.getStore().getAt(rowIndex);
+                    var idGrp = Ext.getCmp("real-group-form-win").getForm().findField("idGrp").getValue();
+                    var idOff = record.get("idOff");
+                    var checked = c;
+                    Ext.Ajax.request({
+                        url: 'admin/OfferingsManagerCtr',
+                        //scope: layForm,
+                        method: 'POST',
+                        params: {
+                            REQUEST : 'checkOfferingsPermissions',
+                            checked : checked,
+                            idOff   : idOff,
+                            idGrp   : idGrp
+                        },
+                        success: function(result, request){
+                            var jsonRes = Ext.util.JSON.decode(result.responseText);
+                            if (jsonRes.success == false) {
+                                Ext.Msg.show({
+                                    title:'Warning',
+                                    msg: 'Offerings permissions:<br>'+String.escape(jsonRes.error),
+                                    buttons: Ext.Msg.OK,
+                                    icon: Ext.MessageBox.WARNING
+                                });
+                            } else {
+                                Ext.Info.msg('Offerings permissions', String.escape(jsonRes.message));
+                            }
+                            GeoShield.Offerings.Store.load();
+                            //layForm.getForm().reset();
+                            //this.disable();
+                        },
+                        failure:  function(result, request) {
+                            Ext.Msg.show({
+                                title:'Warning',
+                                msg: 'Server message:<br>'+String.escape(result.responseText),
+                                buttons: Ext.Msg.OK,
+                                icon: Ext.MessageBox.WARNING
+                            });
+                        }
+                    });
+                });
+            
+            var sosGridPan = new Ext.Panel({
+                region      : 'center',
+                split       : true,
+                layout      : 'fit',
+                collapsible : true,
+                width       : 280,
+                items       :[sosGrid]
+            });
+            // *****************************************************************
+            // SOS Offerings Permissions Panel - END
+            // *****************************************************************
+
+            
             // *****************************************************************
             // Panel for Content with tab panel - START
             // *****************************************************************
@@ -1075,7 +1215,14 @@ MyDesktop.ComplexGroupFormWindow = Ext.extend(Ext.app.Module, {
                         border : false,
                         layout : 'border',
                         items : [layComboPan, layFormPan, layGridPan]
-                    })]
+                    }),
+                    new Ext.Panel({
+                        title : 'SOS permissions',
+                        border : false,
+                        layout : 'border',
+                        items : [sosComboPan, sosGridPan]
+                    })
+                    ]
                 })
             });
 
