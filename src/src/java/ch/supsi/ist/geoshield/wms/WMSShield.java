@@ -335,7 +335,7 @@ public class WMSShield implements Filter {
             }
             // Controllo permessi utente
             AuthorityManager am = new AuthorityManager();
-            List<Layers> lays = dm.getLayers(request.getPathInfo());
+            List<Layers> lays = sur.getLayersCollection();//dm.getLayers(request.getPathInfo());
             List<Layers> layPermit = new ArrayList<Layers>(0);
 
             for (Iterator<Layers> it = lays.iterator(); it.hasNext();) {

@@ -27,8 +27,13 @@ import javax.persistence.UniqueConstraint;
 @Table(name = "offerings_permissions", catalog = "geoshield", schema = "public", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"id_off_fk", "id_grp_fk"})})
 @NamedQueries({
-    @NamedQuery(name = "OfferingsPermissions.findAll", query = "SELECT o FROM OfferingsPermissions o"),
-    @NamedQuery(name = "OfferingsPermissions.findByIdOpr", query = "SELECT o FROM OfferingsPermissions o WHERE o.idOpr = :idOpr")})
+    @NamedQuery(name = "OfferingsPermissions.findAll",
+        query = "SELECT o FROM OfferingsPermissions o"),
+    @NamedQuery(name = "OfferingsPermissions.findByIdOpr", 
+        query = "SELECT o FROM OfferingsPermissions o WHERE o.idOpr = :idOpr"),
+    @NamedQuery(name = "OfferingsPermissions.findByOffAndGrp",
+    query = "SELECT o FROM OfferingsPermissions o WHERE o.idOffFk = :idOff and o.idGrpFk = :idGrp")
+    })
 public class OfferingsPermissions implements Serializable {
     private static final long serialVersionUID = 1L;
     @Id

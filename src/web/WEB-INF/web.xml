@@ -102,6 +102,10 @@
         <servlet-name>SOSProxy</servlet-name>
         <servlet-class>ch.supsi.ist.geoshield.sos.SOSProxy</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>OfferingsManagerCtr</servlet-name>
+        <servlet-class>ch.supsi.ist.geoshield.servlet.admin.OfferingsManagerCtr</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>UserAccountCtr</servlet-name>
         <url-pattern>/admin/admin/UserAccountCtr</url-pattern>
@@ -137,6 +141,10 @@
     <servlet-mapping>
         <servlet-name>SOSProxy</servlet-name>
         <url-pattern>/sos/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>OfferingsManagerCtr</servlet-name>
+        <url-pattern>/admin/admin/OfferingsManagerCtr</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

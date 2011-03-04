@@ -25,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package ch.supsi.ist.geoshield.servlet.admin;
 
 import ch.supsi.ist.geoshield.data.DataManager;
@@ -40,6 +39,7 @@ import ch.supsi.ist.geoshield.utils.Utility;
 import flexjson.JSONSerializer;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import javax.persistence.NoResultException;
@@ -61,8 +61,11 @@ public class ServicesManagerCtr extends HttpServlet {
         PrintWriter out = response.getWriter();
         DataManager dm = new DataManager();
         try {
+            System.out.println("ServicesManagerCtr: ");
             String req = Utility.getHttpParam("REQUEST", request);
             String filter = Utility.getHttpParam("FILTER", request);
+            System.out.println(" > REQUEST: " + req);
+            System.out.println(" > FILTER: " + filter);
             String[] filterArr = null;
             if (filter != null) {
                 filterArr = filter.split(";");
@@ -72,6 +75,14 @@ public class ServicesManagerCtr extends HttpServlet {
             if (req.equalsIgnoreCase("servicesUrls")) {
                 try {
                     List<ServicesUrls> srvUrls = dm.getServicesUrls();
+
+                    for (Iterator<ServicesUrls> it = srvUrls.iterator(); it.hasNext();) {
+                        ServicesUrls sur = it.next();
+                        if (sur.getIdSrvFk().getNameSrv().equalsIgnoreCase("SOS")) {
+                            it.remove();
+                        }
+                    }
+                    
                     if (filterArr != null) {
                         for (Iterator<ServicesUrls> it = srvUrls.iterator(); it.hasNext();) {
                             ServicesUrls sur = it.next();
@@ -96,9 +107,29 @@ public class ServicesManagerCtr extends HttpServlet {
                             }
                         }
                     }
+
                     JSONSerializer json = new JSONSerializer();
                     //System.out.println("JSON:\n" + json.exclude("*.class").prettyPrint("servicesUrls", srvUrls));
                     out.println(json.exclude("*.class").serialize("servicesUrls", srvUrls));
+
+                } catch (Exception e) {
+                    out.println(e.toString());
+                } finally {
+                    dm.close();
+                }
+            } else if (req.equalsIgnoreCase("sosSurls")) {
+                try {
+                    List<ServicesUrls> srvUrls = dm.getServicesUrls();
+                    List<ServicesUrls> ret = new ArrayList<ServicesUrls>();
+                    for (Iterator<ServicesUrls> it = srvUrls.iterator(); it.hasNext();) {
+                        ServicesUrls sur = it.next();
+                        if (sur.getIdSrvFk().getNameSrv().equalsIgnoreCase("SOS")) {
+                            ret.add(sur);
+                        }
+                    }
+                    JSONSerializer json = new JSONSerializer();
+                    //System.out.println("JSON:\n" + json.exclude("*.class").prettyPrint("servicesUrls", srvUrls));
+                    out.println(json.exclude("*.class").serialize("servicesUrls", ret));
                 } catch (Exception e) {
                     out.println(e.toString());
                 } finally {
@@ -172,8 +203,8 @@ public class ServicesManagerCtr extends HttpServlet {
                             spr.setIdGrpFk(grp);
                             spr.setIdSurFk(sur);
                             dm.persist(spr);
-                            out.print("{success: true, message: 'Services Permissions " +
-                                    "<br>for group \"" + grp.getNameGrp() + "\" added.'}");
+                            out.print("{success: true, message: 'Services Permissions "
+                                    + "<br>for group \"" + grp.getNameGrp() + "\" added.'}");
                         } else {
                             out.print("{success: false, error: 'Database mismatch, please reload data!'}");
                         }
@@ -181,8 +212,8 @@ public class ServicesManagerCtr extends HttpServlet {
                 } catch (ServiceException ex) {
                     out.print("{success: false, error: 'Database error!'}");
                 } catch (NoResultException noResultException) {
-                    out.print("{success: false, " +
-                            "error: 'Group or user with given Id are not found'}");
+                    out.print("{success: false, "
+                            + "error: 'Group or user with given Id are not found'}");
                 } catch (Exception ex) {
                     System.out.println(ex.getMessage());
                     out.print("{success: false, error: 'Database error!'}");
@@ -241,8 +272,8 @@ public class ServicesManagerCtr extends HttpServlet {
                 } catch (ServiceException ex) {
                     out.print("{success: false, error: 'Database error!'}");
                 } catch (NoResultException noResultException) {
-                    out.print("{success: false, " +
-                            "error: 'Group or user with given Id are not found'}");
+                    out.print("{success: false, "
+                            + "error: 'Group or user with given Id are not found'}");
                 } catch (Exception ex) {
                     System.out.println("Error: " + ex.getClass().getCanonicalName() + "\n" + ex.getMessage());
                     out.print("{success: false, error: 'Database error!'}");
@@ -260,8 +291,8 @@ public class ServicesManagerCtr extends HttpServlet {
                 ServicesUrls srvUrls = null;
                 try {
                     srvUrls = dm.getServicesUrlsByPathIdSrv(pathSur, dm.getServicesById(Integer.parseInt(idSrv)).getNameSrv());
-                    out.print("{success: false, " +
-                            "error: 'Service with path \"" + pathSur + "\" already exist.'}");
+                    out.print("{success: false, "
+                            + "error: 'Service with path \"" + pathSur + "\" already exist.'}");
                 } catch (ServiceException sex) {
                     Services srv = null;
                     try {
@@ -303,8 +334,8 @@ public class ServicesManagerCtr extends HttpServlet {
                         out.print("{success: false, error: 'Database error!'}");
                     }
                 } catch (NoResultException noResultException) {
-                    out.print("{success: false, " +
-                            "error: 'User with id \"" + idSur + "\" does not exist.'}");
+                    out.print("{success: false, "
+                            + "error: 'User with id \"" + idSur + "\" does not exist.'}");
                 }
             } else if (req.equalsIgnoreCase("deleteService")) {
                 String idSur = Utility.getHttpParam("idSur", request);
@@ -320,8 +351,8 @@ public class ServicesManagerCtr extends HttpServlet {
                         out.print("{success: false, error: 'Database error!'}");
                     }
                 } catch (NoResultException noResultException) {
-                    out.print("{success: false, " +
-                            "error: 'User with id \"" + idSur + "\" does not exist.'}");
+                    out.print("{success: false, "
+                            + "error: 'User with id \"" + idSur + "\" does not exist.'}");
                 }
             } else if (req.equalsIgnoreCase("requests")) {
                 try {

@@ -85,6 +85,7 @@ public class WFSProxy extends HttpServlet {
             throws ServletException, IOException {
         dm = Utility.getDmSession(request);
         ServicesUrls sur;
+        System.out.println("WFSProxy...");
         try {
 
             sur = dm.getServicesUrlsByPathIdSrv(request.getPathInfo(),"WFS");

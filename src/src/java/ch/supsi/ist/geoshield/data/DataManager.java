@@ -48,6 +48,7 @@ import javax.persistence.FlushModeType;
 import javax.persistence.Persistence;
 import javax.persistence.Query;
 import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.ParserConfigurationException;
 import org.geotools.filter.text.cql2.CQLException;
@@ -220,32 +221,45 @@ public class DataManager {
             ServicesUrls pu = (ServicesUrls) query.getSingleResult();
             entMan.refresh(pu);
             ret = pu.getLayersCollection();
+        } catch (NonUniqueResultException e) {
+            List<ServicesUrls> pu = query.getResultList();
+            for (Iterator<ServicesUrls> it = pu.iterator(); it.hasNext();) {
+                ServicesUrls servicesUrls = it.next();
+                System.out.println(" > " + servicesUrls.getPathSur());
+            }
+
+            throw new ServiceException("Sorry, the requested path '" + path + "' "
+                    + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
         } catch (NoResultException e) {
             throw new ServiceException("Sorry, the requested path '" + path + "' "
                     + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
         }
         return ret;
     }
-    /*
-    public synchronized List<Layers> getLayers(String path, String[] layers)
+
+    public synchronized List<Layers> getLayers(String path, String service)
             throws ServiceException {
-        List<Layers> lays = new LinkedList<Layers>();
-        for (int i = 0; i < layers.length; i++) {
-            //System.out.println("Looking for: " + path + " - " + layers[i]);
-            Query query = entMan.createNamedQuery("Layers.findByPathAndName");
-            query.setParameter("pathSur", path);
-            query.setParameter("nameLay", layers[i]);
-            try {
-                Layers lay = (Layers) query.getSingleResult();
-                entMan.refresh(lay);
-                lays.add(lay);
-            } catch (NoResultException e) {
-                throw new ServiceException("Sorry, the requested layer '" + layers[i] + "' for path '" + path
-                        + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
+        List<Layers> ret = null;
+        Query query = entMan.createNamedQuery("ServicesUrls.findByPathSurAndService");
+        query.setParameter("pathSur", path);
+        try {
+            ServicesUrls pu = (ServicesUrls) query.getSingleResult();
+            entMan.refresh(pu);
+            ret = pu.getLayersCollection();
+        } catch (NonUniqueResultException e) {
+            List<ServicesUrls> pu = query.getResultList();
+            for (Iterator<ServicesUrls> it = pu.iterator(); it.hasNext();) {
+                ServicesUrls servicesUrls = it.next();
+                System.out.println(" > " + servicesUrls.getPathSur());
             }
+            throw new ServiceException("Sorry, the requested path '" + path + "' "
+                    + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
+        } catch (NoResultException e) {
+            throw new ServiceException("Sorry, the requested path '" + path + "' "
+                    + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
         }
-        return lays;
-    }*/
+        return ret;
+    }
 
     public synchronized List<Layers> getLayers(String path, String[] layers, String service)
             throws ServiceException {
@@ -512,6 +526,37 @@ public class DataManager {
             //System.out.println("User OGC Filter: " + filterStr);
             return decodeFilter(filterStr);
         }
+    }
+
+    // OFFERINGS ----------------------------------------
+    
+
+    public synchronized Offerings getOfferings(int idOff)
+            throws NoResultException {
+        return entMan.find(Offerings.class, idOff);
+    }
+
+    public synchronized List<Offerings> getOfferings()
+            throws NoResultException {
+        Query query = entMan.createNamedQuery("Offerings.findAll");
+        List<Offerings> ret = query.getResultList();
+        return ret;
+    }
+
+    public synchronized OfferingsPermissions getOfferingsPermissionsByIdGrpIdLay(int idGrp, int idLay)
+            throws NoResultException {
+        Offerings o = entMan.find(Offerings.class, idLay);
+        Groups g = entMan.find(Groups.class, idGrp);
+        return getOfferingsPermissionsByGrpLay(g, o);
+    }
+
+    public synchronized OfferingsPermissions getOfferingsPermissionsByGrpLay(Groups g, Offerings l)
+            throws NoResultException {
+        Query query = entMan.createNamedQuery("OfferingsPermissions.findByOffAndGrp");
+        query.setParameter("idOff", l);
+        query.setParameter("idGrp", g);
+        OfferingsPermissions ret = (OfferingsPermissions) query.getSingleResult();
+        return ret;
     }
 
     public synchronized List<Filter> decodeCqlFilter(String filter) {

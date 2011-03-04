@@ -82,7 +82,7 @@ public class WfsButler implements Filter {
 
     private void doBeforeProcessing(RequestWrapper request, ResponseWrapper response)
             throws IOException, ServletException, ServiceException {
-
+            System.out.println("WfsButler..");
         dm = Utility.getDmSession(request);
         if (request.getMethod().equalsIgnoreCase("GET")) {
             this.handleGetRequest(request, response);
@@ -97,7 +97,6 @@ public class WfsButler implements Filter {
         parser = new WFSParser();
         Object o = parser.parseGet(request);
         request.getSession().setAttribute(OGCParser.OBJREQ, o);
-
     }
 
     private void handlePostRequest(RequestWrapper request, ResponseWrapper response) throws IOException, ServiceException {

@@ -17,7 +17,13 @@
         </file>
         <file>
             <url>src/java/ch/supsi/ist/geoshield/data/DataManager.java</url>
-            <line>440</line>
+            <line>454</line>
         </file>
     </editor-bookmarks>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/1">
+        <file>file:/home/milan/workspace/geoshieldproject-google/trunk/src/src/java/ch/supsi/ist/geoshield/wfs/WfsButler.java</file>
+        <file>file:/home/milan/workspace/geoshieldproject-google/trunk/src/src/java/ch/supsi/ist/geoshield/wfs/WFSShield.java</file>
+        <file>file:/home/milan/workspace/geoshieldproject-google/trunk/src/src/java/ch/supsi/ist/geoshield/wfs/WFSParser.java</file>
+        <file>file:/home/milan/workspace/geoshieldproject-google/trunk/src/src/java/ch/supsi/ist/geoshield/wfs/WFSProxy.java</file>
+    </open-files>
 </project-private>

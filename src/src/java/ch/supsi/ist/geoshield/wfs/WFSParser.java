@@ -58,6 +58,7 @@ public class WFSParser extends OGCParser {
 
     @Override
     public Object parseGet(RequestWrapper request) throws ServiceException {
+        System.out.println("WFSParser...parseGet");
         Object ret = null;
 
         String req = Utility.getHttpParam("REQUEST", request);
@@ -92,10 +93,12 @@ public class WFSParser extends OGCParser {
 
     @Override
     public Object parsePost(RequestWrapper request) throws ServiceException {
+        System.out.println("WFSParser...parsePost");
         Map<String, String[]> postParams = (Map<String, String[]>) request.getParameterMap();
         if (postParams.size() > 0) {
             return this.parseGet(request);
         } else {
+            System.out.println(">>>>");
             try {
                 String body = Utility.getBodyContent(request);
                 // Parsing xml request
