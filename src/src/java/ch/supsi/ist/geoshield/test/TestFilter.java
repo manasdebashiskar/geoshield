@@ -25,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package ch.supsi.ist.geoshield.test;
 
 import ch.supsi.ist.geoshield.data.DataManager;
@@ -44,6 +43,9 @@ import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.filter.AndImpl;
 import org.geotools.filter.FilterTransformer;
+import org.geotools.filter.GeometryFilter;
+import org.geotools.filter.SQLEncoderException;
+import org.geotools.filter.SQLEncoderPostgis;
 import org.geotools.filter.spatial.IntersectsImpl;
 import org.geotools.filter.text.cql2.CQL;
 import org.geotools.filter.text.cql2.CQLException;
@@ -82,95 +84,139 @@ public class TestFilter {
             FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
 
             // TODO code application logic here
-            String ret = "INTERSECTS(the_geom,POINT(48.44 -123.37))";
+            //String ret = "INTERSECTS(the_geom,POINT(48.44 -123.37))";
+            String ret = "INTERSECTS(the_geom,POINT(48.44 -123.37)) and (id>2*4) and name='pippo' and startDate > '2010-10-01'";
             String cql = " and attName = 5";
-            IntersectsImpl filter = (IntersectsImpl)CQL.toFilter(ret);
+            Filter filter = CQL.toFilter(ret);
 
             System.out.println(">" + filter.toString() + "<");
             System.out.println("*************************");
 
+            SQLEncoderPostgis encoder = new SQLEncoderPostgis();
 
-            
+
+            try {
+
+                SimpleFeatureType road3 = DataUtilities.createType(
+                        "test.road",
+                        "id:Integer,the_geom:Point:srid=4326,name:String,startDate:Date");
+
+                encoder.setFeatureType(road3);
+
+                System.out.println("Feature: " + road3.toString());
+
+            } catch (SchemaException ex) {
+                System.out.println("Ex: " + ex.toString());
+                Logger.getLogger(TestFilter.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+
+
+
+            encoder.setLooseBbox(true);
+            encoder.setSRID(2356);
+            encoder.setSupportsGEOS(true);
+
+            String out;
+            try {
+                out = encoder.encode(filter);
+                System.out.println("SQL: " + out);
+            } catch (SQLEncoderException ex) {
+                Logger.getLogger(TestFilter.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+
+
+
+
+
+            /*
             class Optimization extends DuplicatingFilterVisitor {
 
-                private Optimization() {
-                    throw new UnsupportedOperationException("Not yet implemented");
-                }
+            private Optimization() {
+            throw new UnsupportedOperationException("Not yet implemented");
+            }
 
-                private Optimization(FilterFactory2 ff) {
+            private Optimization(FilterFactory2 ff) {
+            }
 
-                }
+            class PName extends DuplicatingFilterVisitor {
 
-                class PName extends DuplicatingFilterVisitor {
+            @Override
+            public Object visit(PropertyName expression, Object data) {
+            System.out.println("PropertyName: " + expression.getPropertyName());
+            return null;
+            }
+            };
 
-                    @Override
-                    public Object visit(PropertyName expression, Object data) {
-                        System.out.println("PropertyName: " + expression.getPropertyName());
-                        return null;
-                    }
-                };
-                
-                @Override
-                public Object visit(Intersects f, Object extraData) {
-                    //System.out.println("Expression1: "+filter.accept(new PName(), null));
-                    //System.out.print("PropertyName: "+filter.getExpression1().accept(new PName(), null));
-                    System.out.println("ClassName: " + f.getClass().getName());
-                    System.out.println("Expression2: " + f.getExpression2().accept(new PName(), null));
-                    //filter.getExpression2().
-                    if (f instanceof AndImpl) {
-                        System.out.println("AndImpl!!!");
-                        return f;
-                    }if (f instanceof IntersectsImpl) {
-                        return f;
-                    }
-                    return null;
-                }
-                @Override
-                public Object visit(Equals filter, Object extraData){
-                    System.out.println("ClassName heheh: " + filter.getClass().getName());
-                    return null;
-                }
-                @Override
-                public Object visit(And filter, Object extraData) {
-                    System.out.println("ClassName heheh: " + filter.getClass().getName());
-                    //System.out.println("Expression2: " + filter.;
-                    //filter.getExpression2().
+            @Override
+            public Object visit(Intersects f, Object extraData) {
+            //System.out.println("Expression1: "+filter.accept(new PName(), null));
+            //System.out.print("PropertyName: "+filter.getExpression1().accept(new PName(), null));
+            System.out.println("ClassName: " + f.getClass().getName());
+            System.out.println("Expression2: " + f.getExpression2().accept(new PName(), null));
+            //filter.getExpression2().
+            if (f instanceof AndImpl) {
+            System.out.println("AndImpl!!!");
+            return f;
+            }
+            if (f instanceof IntersectsImpl) {
+            return f;
+            }
+            return null;
+            }
 
-                    return null;
-                }
+            @Override
+            public Object visit(Equals filter, Object extraData) {
+            System.out.println("ClassName heheh: " + filter.getClass().getName());
+            return null;
+            }
+
+            @Override
+            public Object visit(And filter, Object extraData) {
+            System.out.println("ClassName heheh: " + filter.getClass().getName());
+            //System.out.println("Expression2: " + filter.;
+            //filter.getExpression2().
+
+            return null;
+            }
             }
 
             class Interseptor extends DuplicatingFilterVisitor {
 
-                class PName extends DuplicatingFilterVisitor {
+            class PName extends DuplicatingFilterVisitor {
 
-                    public Object visit(Expression expression, Object data) {
-                        System.out.println("PropertyName: " + expression.toString());
-                        return null;
-                    }
-                };
-                
-                @Override
-                public Object visit(Intersects f, Object extraData) {
-                    //System.out.println("Expression1: "+filter.accept(new PName(), null));
-                    //System.out.print("PropertyName: "+filter.getExpression1().accept(new PName(), null));
-                    System.out.println("1-ClassName: " + f.getClass().getName());
-                    System.out.println("2-Expression1: " + f.getExpression1().accept(new PName(), null));
-                    System.out.println("3-Expression2: " + f.getExpression2().accept(new PName(), null));
-                    //filter.getExpression2().
-                    if (f instanceof AndImpl) {
-                        System.out.println("AndImpl!!!");
-                        return f;
-                    }if (f instanceof IntersectsImpl) {
-                        return f;
-                    }
-                    return null;
-                }
+            public Object visit(Expression expression, Object data) {
+            System.out.println("PropertyName: " + expression.toString());
+            return null;
             }
-/*
+            };
+
+            @Override
+            public Object visit(Intersects f, Object extraData) {
+            //System.out.println("Expression1: "+filter.accept(new PName(), null));
+            //System.out.print("PropertyName: "+filter.getExpression1().accept(new PName(), null));
+            System.out.println("1-ClassName: " + f.getClass().getName());
+            System.out.println("2-Expression1: " + f.getExpression1().accept(new PName(), null));
+            System.out.println("3-Expression2: " + f.getExpression2().accept(new PName(), null));
+            //filter.getExpression2().
+            if (f instanceof AndImpl) {
+            System.out.println("AndImpl!!!");
+            return f;
+            }
+            if (f instanceof IntersectsImpl) {
+            return f;
+            }
+            return null;
+            }
+            }
+
+
+             */
+            /*
             Object o = filter.accept(new Interseptor(), null);
             System.out.println(o);
-*/
+             */
             //IntersectsImpl im = (IntersectsImpl)filter.accept(new Optimization(), null);
             //System.out.println("ClassName: " + im.getClass().getName());
             //System.out.println("ClassName: " + im.toString());
@@ -195,7 +241,7 @@ public class TestFilter {
                 SimpleFeature feature = build.buildFeature(null);
                 //System.out.println(feature.getDefaultGeometryProperty().getName());
 
-                System.out.println("Evaluating: " +filter.evaluate(feature));
+                System.out.println("Evaluating: " + filter.evaluate(feature));
                 //System.out.println("Evaluating: " + im.evaluate(feature));
                 //;
 
@@ -230,78 +276,78 @@ public class TestFilter {
             }
              */
             return;
-        /*
-        Configuration configuration = new org.geotools.filter.v1_0.OGCConfiguration();
-        Parser parser = new Parser(configuration);
+            /*
+            Configuration configuration = new org.geotools.filter.v1_0.OGCConfiguration();
+            Parser parser = new Parser(configuration);
 
 
-        String xmlFilter = "<ogc:Filter xmlns:ogc='http://www.opengis.net/ogc' ";
-        xmlFilter += "  xmlns:gml='http://www.opengis.net/gml'>";
-        xmlFilter += "  <ogc:PropertyIsEqualTo>";
-        xmlFilter += "    <ogc:PropertyName>attName</ogc:PropertyName>";
-        xmlFilter += "    <ogc:Literal>5</ogc:Literal>";
-        xmlFilter += "  </ogc:PropertyIsEqualTo>";
-        xmlFilter += "</ogc:Filter>";
+            String xmlFilter = "<ogc:Filter xmlns:ogc='http://www.opengis.net/ogc' ";
+            xmlFilter += "  xmlns:gml='http://www.opengis.net/gml'>";
+            xmlFilter += "  <ogc:PropertyIsEqualTo>";
+            xmlFilter += "    <ogc:PropertyName>attName</ogc:PropertyName>";
+            xmlFilter += "    <ogc:Literal>5</ogc:Literal>";
+            xmlFilter += "  </ogc:PropertyIsEqualTo>";
+            xmlFilter += "</ogc:Filter>";
 
 
-        ByteArrayInputStream xml = new ByteArrayInputStream(xmlFilter.getBytes("UTF-8"));
-        Filter filter2 = (Filter) parser.parse(xml);
+            ByteArrayInputStream xml = new ByteArrayInputStream(xmlFilter.getBytes("UTF-8"));
+            Filter filter2 = (Filter) parser.parse(xml);
 
 
-        System.out.println("*************************");
-        System.out.println(">" + filter2.toString() + "<");
-        System.out.println("*************************");
+            System.out.println("*************************");
+            System.out.println(">" + filter2.toString() + "<");
+            System.out.println("*************************");
 
 
-        Encoder encoder = new Encoder(configuration);
+            Encoder encoder = new Encoder(configuration);
 
-        FilterTransformer ft = new FilterTransformer();
-        ft.setOmitXMLDeclaration(true);
-        ft.setIndentation(2);
-        System.out.println("*************************");
-        System.out.println(ft.transform(filter));
+            FilterTransformer ft = new FilterTransformer();
+            ft.setOmitXMLDeclaration(true);
+            ft.setIndentation(2);
+            System.out.println("*************************");
+            System.out.println(ft.transform(filter));
 
-        System.out.println("*************************");
-        System.out.println(ft.transform(filter2));
-        System.out.println("*************************");
-
-        
-
-        List<Filter> list = new LinkedList<Filter>();
-        list.add(filter);
-        list.add(filter2);
-
-        And and = ff.and(list);
-
-        System.out.println("*************************");
-        System.out.println(ft.transform(and));
-        System.out.println("*************************");
-         */
-        /*
-        StringBuffer str = new StringBuffer();
-        str.append("(");
-        str.append(ft.transform(filter));
-        str.append(")(");
-        str.append(ft.transform(filter2));
-        str.append(")");
-
-        System.out.println(str);
-         */
+            System.out.println("*************************");
+            System.out.println(ft.transform(filter2));
+            System.out.println("*************************");
 
 
-        //DataManager dm = new DataManager();
 
-        //dm.decodeFilter(str.toString());
+            List<Filter> list = new LinkedList<Filter>();
+            list.add(filter);
+            list.add(filter2);
 
-        /*} catch (TransformerException ex) {
-        Logger.getLogger(TestFilter.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-        Logger.getLogger(TestFilter.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SAXException ex) {
-        Logger.getLogger(TestFilter.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ParserConfigurationException ex) {
-        Logger.getLogger(TestFilter.class.getName()).log(Level.SEVERE, null, ex);
-         */
+            And and = ff.and(list);
+
+            System.out.println("*************************");
+            System.out.println(ft.transform(and));
+            System.out.println("*************************");
+             */
+            /*
+            StringBuffer str = new StringBuffer();
+            str.append("(");
+            str.append(ft.transform(filter));
+            str.append(")(");
+            str.append(ft.transform(filter2));
+            str.append(")");
+
+            System.out.println(str);
+             */
+
+
+            //DataManager dm = new DataManager();
+
+            //dm.decodeFilter(str.toString());
+
+            /*} catch (TransformerException ex) {
+            Logger.getLogger(TestFilter.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+            Logger.getLogger(TestFilter.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (SAXException ex) {
+            Logger.getLogger(TestFilter.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ParserConfigurationException ex) {
+            Logger.getLogger(TestFilter.class.getName()).log(Level.SEVERE, null, ex);
+             */
         } catch (CQLException ex) {
             Logger.getLogger(TestFilter.class.getName()).log(Level.SEVERE, null, ex);
         }
