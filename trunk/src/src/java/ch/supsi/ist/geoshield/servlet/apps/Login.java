@@ -77,10 +77,10 @@ public class Login extends HttpServlet {
                 HttpSession session = null;
 
                 if (req.getSession().isNew()) {
-                    //System.out.println("Nuova sessione!");
+                    System.out.println("Nuova sessione!");
                     session = req.getSession(true);
                 } else {
-                    //System.out.println("Sessione esistente!");
+                    System.out.println("Sessione esistente!");
                     session = req.getSession();
                 }
 

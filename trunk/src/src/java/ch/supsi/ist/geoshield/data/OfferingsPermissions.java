@@ -24,7 +24,7 @@ import javax.persistence.UniqueConstraint;
  * @author milan
  */
 @Entity
-@Table(name = "offerings_permissions", catalog = "geoshield", schema = "public", uniqueConstraints = {
+@Table(name = "offerings_permissions", schema = "public", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"id_off_fk", "id_grp_fk"})})
 @NamedQueries({
     @NamedQuery(name = "OfferingsPermissions.findAll",

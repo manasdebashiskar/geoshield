@@ -3,27 +3,21 @@
     <data xmlns="http://www.netbeans.org/ns/profiler/1" version="0.4"/>
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/1">
         <file>
+            <url>src/java/ch/supsi/ist/interceptor/shields/wfs/WfsShield.java</url>
+            <line>542</line>
+        </file>
+        <file>
             <url>src/java/ch/supsi/ist/interceptor/Proxy.java</url>
             <line>469</line>
         </file>
         <file>
-            <url>src/java/ch/supsi/ist/interceptor/shields/wfs/WfsShield.java</url>
-            <line>542</line>
+            <url>src/java/ch/supsi/ist/geoshield/data/DataManager.java</url>
+            <line>454</line>
         </file>
         <file>
             <url>src/java/ch/supsi/ist/geoshield/servlets/Proxy.java</url>
             <line>224</line>
             <line>392</line>
         </file>
-        <file>
-            <url>src/java/ch/supsi/ist/geoshield/data/DataManager.java</url>
-            <line>454</line>
-        </file>
     </editor-bookmarks>
-    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/1">
-        <file>file:/home/milan/workspace/geoshieldproject-google/trunk/src/src/java/ch/supsi/ist/geoshield/wfs/WfsButler.java</file>
-        <file>file:/home/milan/workspace/geoshieldproject-google/trunk/src/src/java/ch/supsi/ist/geoshield/wfs/WFSShield.java</file>
-        <file>file:/home/milan/workspace/geoshieldproject-google/trunk/src/src/java/ch/supsi/ist/geoshield/wfs/WFSParser.java</file>
-        <file>file:/home/milan/workspace/geoshieldproject-google/trunk/src/src/java/ch/supsi/ist/geoshield/wfs/WFSProxy.java</file>
-    </open-files>
 </project-private>
