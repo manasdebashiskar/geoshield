@@ -226,7 +226,7 @@ public class ServicesUrls implements Serializable {
 
     @Override
     public String toString() {
-        return "ch.supsi.ist.interceptor.data.ServicesUrls[idSur=" + idSur + "]";
+        return "ch.supsi.ist.geoshield.data.ServicesUrls[idSur=" + idSur + "]";
     }
 
 }

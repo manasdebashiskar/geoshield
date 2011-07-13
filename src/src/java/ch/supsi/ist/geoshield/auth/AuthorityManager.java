@@ -145,13 +145,13 @@ public class AuthorityManager {
 
         Date now = new Date();
         List<GroupsUsers> usrGrp = usr.getGroupsUsers();
+
         boolean expired = false;
         String gName = "";
 
         // Loop groups
         for (Iterator<GroupsUsers> it = usrGrp.iterator(); it.hasNext();) {
             GroupsUsers gus = it.next();
-
             // Check if expired
             if (gus.getExpirationGus() == null || gus.getExpirationGus().compareTo(now) >= 0) {
 
@@ -163,6 +163,7 @@ public class AuthorityManager {
                     
                     for (Iterator<SprReq> grIt = sp.getSprReqCollection().iterator(); grIt.hasNext();) {
                         SprReq sre = grIt.next();
+
                         if (sre.getIdReqFk().equals(req)) {
                             dm.close();
                             return true;
@@ -198,13 +199,17 @@ public class AuthorityManager {
 
         Date now = new Date();
         List<GroupsUsers> usrGrp = usr.getGroupsUsers();
+        
+        //System.out.println("User member of " + usrGrp.size() + " groups.");
+        
         boolean expired = false;
         String gName = "";
 
         // Loop groups
         for (Iterator<GroupsUsers> it = usrGrp.iterator(); it.hasNext();) {
             GroupsUsers gus = it.next();
-
+            //System.out.println(" > Group: " + gus.getIdGrpFk().getNameGrp());
+            
             // Check if expired
             if (gus.getExpirationGus() == null || gus.getExpirationGus().compareTo(now) >= 0) {
 
@@ -214,10 +219,16 @@ public class AuthorityManager {
                     ServicesPermissions sp = dm.getServicePermissionBySurGrp(
                             sur.getIdSur(), idGrp);
 
+                    //System.out.println(" > ServicesPermissions: " + sp.getIdSpr());
+
                     for (Iterator<SprReq> grIt = sp.getSprReqCollection().iterator(); grIt.hasNext();) {
                         SprReq sre = grIt.next();
+                        //System.out.println(" > SprReq: " + sre.getIdSre());
+                        //System.out.println(" > SprReq: " + sre.getIdReqFk().getIdReq());
+                        //System.out.println(" > req: " + req.getIdReq());
                         if (sre.getIdReqFk().equals(req)) {
                             //dm.close();
+                            //System.out.println("Access OK");
                             return true;
                         }
                     }
@@ -244,11 +255,12 @@ public class AuthorityManager {
     public Users WWWAuthenticate(javax.servlet.http.HttpServletRequest req /*String authHeader*/) throws IOException {
         //System.out.println("Received : " + authHeader);
         String authHeader = req.getHeader("Authorization");
+        //System.out.println("authHeader: " + authHeader);
         if (authHeader == null) {
             return null;  // no auth
         }
         String userpassEncoded = null;
-        //System.out.println("authHeader: " + authHeader);
+        
         if (authHeader.toUpperCase().startsWith("BASIC ")) {
             userpassEncoded = authHeader.substring(6);
         } else if (authHeader.toUpperCase().startsWith("BASICG ")) {
@@ -256,19 +268,9 @@ public class AuthorityManager {
         } else {
             return null;
         }
-        // Get encoded user and password, comes after "BASIC "
-        // dec
-        /*
-        sun.misc.BASE64Decoder dec = new sun.misc.BASE64Decoder();
-        String userpassDecoded = new String(dec.decodeBuffer(userpassEncoded));
-         */
-        //org.apache.commons.codec.binary.Base64 dec = new org.apache.commons.codec.binary.Base64();
         byte[] b = org.apache.commons.codec.binary.Base64.decodeBase64(userpassEncoded.getBytes());
-        //String userpassDecoded = new String(org.apache.commons.codec.binary.Base64.decodeBase64(userpassEncoded));
         String userpassDecoded = new String(b);
-        //System.out.println("Params passed: " + userpassDecoded);
-        //DataManager dm = new DataManager();
-        DataManager dm = Utility.getDmSession(req);// DataManager)req.getSession().getAttribute("datamanager");
+        DataManager dm = Utility.getDmSession(req);
         //System.out.println("Usint datamanger from session obj..");
         try {
             //System.out.println("userpassDecoded: " + userpassDecoded);
@@ -280,6 +282,7 @@ public class AuthorityManager {
             return null;
         }
     }
+
 
     /**
      * Check if the given user belong at least to one group with permission on

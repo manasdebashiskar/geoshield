@@ -37,7 +37,7 @@ import ch.supsi.ist.geoshield.data.Layers;
 import ch.supsi.ist.geoshield.data.LayersPermissions;
 import ch.supsi.ist.geoshield.data.Users;
 import ch.supsi.ist.geoshield.exception.ServiceException;
-//import ch.supsi.ist.interceptor.test.FilterTransformer;
+//import ch.supsi.ist.geoshield.test.FilterTransformer;
 import org.geotools.filter.FilterTransformer;
 
 

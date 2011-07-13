@@ -171,7 +171,7 @@ public class Groups implements Serializable {
 
     @Override
     public String toString() {
-        return "ch.supsi.ist.interceptor.data.Groups[idGrp=" + idGrp + "]";
+        return "ch.supsi.ist.geoshield.data.Groups[idGrp=" + idGrp + "]";
     }
 
 }

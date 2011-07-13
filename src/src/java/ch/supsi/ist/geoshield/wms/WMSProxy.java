@@ -93,8 +93,8 @@ public class WMSProxy extends HttpServlet {
 
             if (ServletFileUpload.isMultipartContent(request)) {
                 throw new ServletException("MultipartContent is not yet handled by GeoShield");
+                
             } else {
-
 
                 Enumeration paramNames = request.getParameterNames();
                 List<NameValuePair> nvp = new ArrayList<NameValuePair>();

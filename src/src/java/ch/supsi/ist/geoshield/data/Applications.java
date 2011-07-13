@@ -211,7 +211,7 @@ public class Applications implements Serializable {
 
     @Override
     public String toString() {
-        return "ch.supsi.ist.interceptor.data.Applications[idAps=" + idAps + "]";
+        return "ch.supsi.ist.geoshield.data.Applications[idAps=" + idAps + "]";
     }
 
 }

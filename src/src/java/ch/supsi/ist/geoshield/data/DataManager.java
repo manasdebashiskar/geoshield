@@ -25,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package ch.supsi.ist.geoshield.data;
 
 import ch.supsi.ist.geoshield.exception.ServiceException;
@@ -44,7 +43,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.FlushModeType;
 import javax.persistence.Persistence;
 import javax.persistence.Query;
 import javax.persistence.NoResultException;
@@ -62,8 +60,15 @@ import org.xml.sax.SAXException;
 public class DataManager {
 
     // CREATE  emf.createEntityManager(); on class initialization
-    EntityManagerFactory emf = Persistence.createEntityManagerFactory("GeoshieldPU");
-    EntityManager entMan = emf.createEntityManager();
+    static EntityManagerFactory emf = Persistence.createEntityManagerFactory("GeoshieldPU");
+    static EntityManager entMan = emf.createEntityManager();
+
+    public DataManager(){
+        if(!this.isOpen()){
+            System.out.println(" > Recreating on initializati9on");
+            this.recreate();
+        }
+    }
 
     // APPLICATION ----------------------------------------
     public synchronized Applications getApplication(int id_aps)
@@ -296,20 +301,20 @@ public class DataManager {
         List<ServicesUrls> ret = query.getResultList();
         return ret;
     }
-/*
+    /*
     public synchronized ServicesUrls getServicesUrlsByPath(String path) throws ServiceException {
-        //EntityManager em = emf.createEntityManager();
-        Query query = entMan.createNamedQuery("ServicesUrls.findByPathSur");
-        query.setParameter("pathSur", path);
-        ServicesUrls ret = null;
-        try {
-            ret = (ServicesUrls) query.getSingleResult();
-            entMan.refresh(ret);
-        } catch (NoResultException e) {
-            throw new ServiceException("Sorry, the requested path '" + path + "' are "
-                    + "not handled by this GSS.", ServiceException.INVALID_SERVER_URL);
-        }
-        return ret;
+    //EntityManager em = emf.createEntityManager();
+    Query query = entMan.createNamedQuery("ServicesUrls.findByPathSur");
+    query.setParameter("pathSur", path);
+    ServicesUrls ret = null;
+    try {
+    ret = (ServicesUrls) query.getSingleResult();
+    entMan.refresh(ret);
+    } catch (NoResultException e) {
+    throw new ServiceException("Sorry, the requested path '" + path + "' are "
+    + "not handled by this GSS.", ServiceException.INVALID_SERVER_URL);
+    }
+    return ret;
     }*/
 
     public synchronized ServicesUrls getServicesUrlsByPathIdSrv(String path, String service) throws ServiceException {
@@ -456,9 +461,9 @@ public class DataManager {
         return ret;
     }
 
-    public synchronized Map<String,Requests> getRequestByUsersServiceUrl(Users usr, ServicesUrls sur)
+    public synchronized Map<String, Requests> getRequestByUsersServiceUrl(Users usr, ServicesUrls sur)
             throws ServiceException {
-        Map<String,Requests> ret = new HashMap<String, Requests>();
+        Map<String, Requests> ret = new HashMap<String, Requests>();
         for (ListIterator<Groups> isG = usr.getGroups().listIterator(); isG.hasNext();) {
             Groups g = isG.next();
             ServicesPermissions sp = this.getServicePermissionBySurGrp(sur.getIdSur(), g.getIdGrp());
@@ -529,8 +534,6 @@ public class DataManager {
     }
 
     // OFFERINGS ----------------------------------------
-    
-
     public synchronized Offerings getOfferings(int idOff)
             throws NoResultException {
         return entMan.find(Offerings.class, idOff);
@@ -725,7 +728,7 @@ public class DataManager {
     }
 
     public void close() {
-
+        System.out.println("Closing connection..");
         if (entMan.isOpen()) {
             entMan.close();
         }
@@ -736,5 +739,10 @@ public class DataManager {
 
     public boolean isOpen() {
         return entMan.isOpen() && emf.isOpen();
+    }
+
+    public void recreate() {
+        emf = Persistence.createEntityManagerFactory("GeoshieldPU");
+        entMan = emf.createEntityManager();
     }
 }

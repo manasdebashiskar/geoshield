@@ -87,6 +87,7 @@ public class TestFilter {
             //String ret = "INTERSECTS(the_geom,POINT(48.44 -123.37))";
             String ret = "INTERSECTS(the_geom,POINT(48.44 -123.37)) and (id>2*4) and name='pippo' and startDate > '2010-10-01'";
             String cql = " and attName = 5";
+            ret = "BBOX(the_geom,7.0546875,43.9453125,11.0546875,47.9453125)";
             Filter filter = CQL.toFilter(ret);
 
             System.out.println(">" + filter.toString() + "<");
