@@ -29,7 +29,6 @@
 package ch.supsi.ist.geoshield.servlet.admin;
 
 import ch.supsi.ist.geoshield.data.DataManager;
-import ch.supsi.ist.geoshield.data.Groups;
 import ch.supsi.ist.geoshield.data.GroupsUsers;
 import ch.supsi.ist.geoshield.data.Users;
 import ch.supsi.ist.geoshield.exception.ServiceException;
@@ -38,11 +37,7 @@ import flexjson.DateTransformer;
 import flexjson.JSONSerializer;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.servlet.ServletException;

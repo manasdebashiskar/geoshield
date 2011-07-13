@@ -270,6 +270,6 @@ public class Users implements Serializable {
     @JSON(include = false)
     @Override
     public String toString() {
-        return "ch.supsi.ist.interceptor.data.Users[idUsr=" + idUsr + ", name=" + nameUsr + ",lastname=" + lastNameUsr + "]";
+        return "ch.supsi.ist.geoshield.data.Users[idUsr=" + idUsr + ", name=" + nameUsr + ",lastname=" + lastNameUsr + "]";
     }
 }

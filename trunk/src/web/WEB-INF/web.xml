@@ -32,8 +32,6 @@
     <filter-mapping>
         <filter-name>UserShiled</filter-name>
         <url-pattern>/wms/*</url-pattern>
-        <url-pattern>/wfs/*</url-pattern>
-        <url-pattern>/sos/*</url-pattern>
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
     <filter-mapping>
@@ -106,6 +104,10 @@
         <servlet-name>OfferingsManagerCtr</servlet-name>
         <servlet-class>ch.supsi.ist.geoshield.servlet.admin.OfferingsManagerCtr</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>GeoshieldResourceAccessManagerCtr</servlet-name>
+        <servlet-class>ch.supsi.ist.geoshield.ramplugin.GeoshieldResourceAccessManagerCtr</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>UserAccountCtr</servlet-name>
         <url-pattern>/admin/admin/UserAccountCtr</url-pattern>
@@ -145,6 +147,10 @@
     <servlet-mapping>
         <servlet-name>OfferingsManagerCtr</servlet-name>
         <url-pattern>/admin/admin/OfferingsManagerCtr</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GeoshieldResourceAccessManagerCtr</servlet-name>
+        <url-pattern>/gram</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

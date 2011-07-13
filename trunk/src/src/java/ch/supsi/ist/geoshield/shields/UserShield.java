@@ -45,7 +45,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
 import javax.servlet.http.HttpSession;
 
 /**
@@ -68,7 +67,15 @@ public class UserShield implements Filter {
 
         // @todo check if channel is secured
         // request.isSecure();
-
+        /*System.out.println("\n--------------------------------");
+        System.out.println("Headers summary:");
+        Enumeration h = req.getHeaderNames();
+        while (h.hasMoreElements()) {
+            String object = (String)h.nextElement();
+            System.out.println(object + " " + req.getHeader(object));
+        }
+        System.out.println("--------------------------------\n");*/
+        
         String path = req.getPathInfo();
 
         // If asked a public url it is not needed to authenticate
@@ -119,6 +126,12 @@ public class UserShield implements Filter {
                 try {
                     if (req.getSession().getAttribute("datamanager") == null) {
                         req.getSession().setAttribute("datamanager", new DataManager());
+                    }else{
+                        DataManager dm = (DataManager)req.getSession().getAttribute("datamanager");
+                        if(!dm.isOpen()){
+                            dm.recreate();
+                            System.out.println("Recreation of new entity manager..");
+                        }
                     }
                 } catch (IllegalStateException e) {
                     System.err.println(e.toString());
@@ -127,8 +140,10 @@ public class UserShield implements Filter {
                 //String auth = req.getHeader("Authorization");
                 AuthorityManager am = new AuthorityManager();
                 usr = am.WWWAuthenticate(req);
+
                 am.close();
                 if (usr == null) {
+                    System.out.println("User is NULL");
                     if (session.getAttribute("login") == null) {
                         session.setAttribute("login", new Integer(1));
                     }
@@ -145,6 +160,7 @@ public class UserShield implements Filter {
                                 UserException.INVALID_USER_OR_PASSWORD);
                     }
                 } else {
+                    System.out.println("User is " + usr.getLastNameUsr());
                     session.setAttribute("user", usr);
                     session.setAttribute("login", new Integer(1));
                 }

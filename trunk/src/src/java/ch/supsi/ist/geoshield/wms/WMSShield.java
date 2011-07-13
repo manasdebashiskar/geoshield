@@ -60,7 +60,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -97,7 +96,7 @@ public class WMSShield implements Filter {
                 // @todo set the exception in a throwable object that will be thrown after dataManager is closed
                 throw new ServiceException("Parameter name 'Service' is mandatory.");
             }
-            Services srv = dm.getServiceByName(service);
+            //Services srv = dm.getServiceByName(service);
             String path = request.getPathInfo();
 
             // ************************************************************

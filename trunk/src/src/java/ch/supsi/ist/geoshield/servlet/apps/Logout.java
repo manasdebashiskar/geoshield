@@ -73,9 +73,9 @@ public class Logout extends HttpServlet {
             System.out.println(sdf.format(cal.getTime()) + " - " +
                     usr.getFirstNameUsr() + " " + usr.getLastNameUsr() + " logged out.");
         }
-        
+        System.out.println("Closing Datamanager..");
         if (request.getSession().getAttribute("datamanager") != null) {
-            DataManager dm = (DataManager) request.getSession().getAttribute("user");
+            DataManager dm = (DataManager) request.getSession().getAttribute("datamanager");
             dm.close();
             //System.out.println(" - DataManager closed.");
         }
@@ -84,7 +84,7 @@ public class Logout extends HttpServlet {
         response.setHeader("WWW-Authenticate", "BASIC realm=\"Istituto Scienze della Terra\"");
         response.sendError(response.SC_PROXY_AUTHENTICATION_REQUIRED);
         response.getWriter().close();
-         */
+         */ 
         out.print("True");
     }
 

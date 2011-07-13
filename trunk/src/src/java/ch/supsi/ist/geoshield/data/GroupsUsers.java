@@ -159,6 +159,6 @@ public class GroupsUsers implements Serializable {
 
     @Override
     public String toString() {
-        return "ch.supsi.ist.interceptor.data.GroupsUsers[idGus=" + idGus + "]";
+        return "ch.supsi.ist.geoshield.data.GroupsUsers[idGus=" + idGus + "]";
     }
 }

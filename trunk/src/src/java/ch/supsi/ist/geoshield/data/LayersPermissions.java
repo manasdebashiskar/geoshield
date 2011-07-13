@@ -147,6 +147,6 @@ public class LayersPermissions implements Serializable {
 
     @Override
     public String toString() {
-        return "ch.supsi.ist.interceptor.data.LayersPermissions[idLpr=" + idLpr + "]";
+        return "ch.supsi.ist.geoshield.data.LayersPermissions[idLpr=" + idLpr + "]";
     }
 }

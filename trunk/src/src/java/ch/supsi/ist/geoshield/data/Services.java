@@ -139,7 +139,7 @@ public class Services implements Serializable {
 
     @Override
     public String toString() {
-        return "ch.supsi.ist.interceptor.data.Services[idSrv=" + idSrv + "]";
+        return "ch.supsi.ist.geoshield.data.Services[idSrv=" + idSrv + "]";
     }
 
 }

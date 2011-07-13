@@ -128,7 +128,7 @@ public class SprReq implements Serializable {
 
     @Override
     public String toString() {
-        return "ch.supsi.ist.interceptor.data.SprReq[idSre=" + idSre + "]";
+        return "ch.supsi.ist.geoshield.data.SprReq[idSre=" + idSre + "]";
     }
 
 }

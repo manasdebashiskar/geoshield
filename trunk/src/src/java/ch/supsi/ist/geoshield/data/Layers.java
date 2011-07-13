@@ -216,7 +216,7 @@ public class Layers implements Serializable {
 
     @Override
     public String toString() {
-        return "ch.supsi.ist.interceptor.data.Layers[idLay=" + idLay + "]";
+        return "ch.supsi.ist.geoshield.data.Layers[idLay=" + idLay + "]";
     }
 
 }

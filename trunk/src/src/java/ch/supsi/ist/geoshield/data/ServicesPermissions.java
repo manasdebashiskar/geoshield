@@ -141,7 +141,7 @@ public class ServicesPermissions implements Serializable {
 
     @Override
     public String toString() {
-        return "ch.supsi.ist.interceptor.data.ServicesPermissions[idSpr=" + idSpr + "]";
+        return "ch.supsi.ist.geoshield.data.ServicesPermissions[idSpr=" + idSpr + "]";
     }
 
 }

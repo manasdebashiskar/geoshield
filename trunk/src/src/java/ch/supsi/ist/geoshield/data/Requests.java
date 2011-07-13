@@ -35,6 +35,7 @@ import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -69,18 +70,22 @@ import javax.persistence.Table;
 })
 public class Requests implements Serializable {
     private static final long serialVersionUID = 1L;
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
     @Column(name = "id_req", nullable = false)
     private Integer idReq;
+
     @Basic(optional = false)
     @Column(name = "name_req", nullable = false, length = 20)
     private String nameReq;
+
     @JoinColumn(name = "id_srv_fk", referencedColumnName = "id_srv", nullable = false)
     @ManyToOne(optional = false)
     private Services idSrvFk;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "idReqFk")
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "idReqFk", fetch=FetchType.EAGER)
     private List<SprReq> sprReqCollection;
 
     public Requests() {
@@ -150,7 +155,7 @@ public class Requests implements Serializable {
 
     @Override
     public String toString() {
-        return "ch.supsi.ist.interceptor.data.Requests[idReq=" + idReq + "]";
+        return "ch.supsi.ist.geoshield.data.Requests[idReq=" + idReq + "]";
     }
 
 }

@@ -45,7 +45,7 @@ import org.apache.commons.httpclient.NameValuePair;
  */
 public class Utility {
 
-    static String PACKAGE = "ch.supsi.ist.interceptor.data.";
+    static String PACKAGE = "ch.supsi.ist.geoshield.data.";
 
     public static String getHttpParam(String parameter, javax.servlet.http.HttpServletRequest req) {
         String ret = null;
@@ -241,7 +241,6 @@ public class Utility {
             req.getSession().setAttribute("datamanager", new ch.supsi.ist.geoshield.data.DataManager());
         }
         return (ch.supsi.ist.geoshield.data.DataManager) req.getSession().getAttribute("datamanager");
-
     }
 
     /**

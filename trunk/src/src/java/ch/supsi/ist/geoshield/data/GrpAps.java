@@ -123,6 +123,6 @@ public class GrpAps implements Serializable {
 
     @Override
     public String toString() {
-        return "ch.supsi.ist.interceptor.data.GrpAps[idGra=" + idGra + "]";
+        return "ch.supsi.ist.geoshield.data.GrpAps[idGra=" + idGra + "]";
     }
 }
