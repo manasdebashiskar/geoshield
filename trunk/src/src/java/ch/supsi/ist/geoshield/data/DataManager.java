@@ -63,8 +63,8 @@ public class DataManager {
     static EntityManagerFactory emf = Persistence.createEntityManagerFactory("GeoshieldPU");
     static EntityManager entMan = emf.createEntityManager();
 
-    public DataManager(){
-        if(!this.isOpen()){
+    public DataManager() {
+        if (!this.isOpen()) {
             System.out.println(" > Recreating on initializati9on");
             this.recreate();
         }
@@ -118,7 +118,7 @@ public class DataManager {
         Query query = entMan.createNamedQuery("Users.findByNameUsr");
         query.setParameter("nameUsr", name);
         Users ret = (Users) query.getSingleResult();
-        entMan.refresh(ret);
+        //entMan.refresh(ret);
         return ret;
     }
 
@@ -731,14 +731,20 @@ public class DataManager {
         System.out.println("Closing connection..");
         if (entMan.isOpen()) {
             entMan.close();
+            //entMan = null;
         }
         if (emf.isOpen()) {
             emf.close();
+            // emf = null;
         }
     }
 
     public boolean isOpen() {
-        return entMan.isOpen() && emf.isOpen();
+        if (entMan == null || emf == null) {
+            return false;
+        } else {
+            return entMan.isOpen() && emf.isOpen();
+        }
     }
 
     public void recreate() {

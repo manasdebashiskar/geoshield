@@ -32,6 +32,7 @@ import ch.supsi.ist.geoshield.data.DataManager;
 import ch.supsi.ist.geoshield.data.Groups;
 import ch.supsi.ist.geoshield.data.Users;
 import flexjson.JSONSerializer;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -45,12 +46,14 @@ public class TestAllaRinfusa {
      */
     public static void main(String[] args) {
         // TODO code application logic here
-        String url = "http://localhost:8080/geoserver/wms?request=GetLegendGraphic&format=image%2Fpng&width=20&height=20&layer=archeositi&style=point";
-
-        System.out.println(url);
-        System.out.println(url.indexOf("\\?"));
-        System.out.println(url.split("\\?")[1]);
-
+        Long after = new Long(Calendar.getInstance().getTimeInMillis());
+        Long now = new Long(Calendar.getInstance().getTimeInMillis());
+        after = after + 5000;
+        
+        System.out.println(now.compareTo(after));
+        System.out.println(after.compareTo(now));
+        System.out.println(after.compareTo(now)>0);
+        System.out.println(now.compareTo(after)>0);
     }
 
 }

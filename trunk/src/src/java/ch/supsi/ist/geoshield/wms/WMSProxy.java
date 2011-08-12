@@ -48,6 +48,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
@@ -82,13 +83,14 @@ public class WMSProxy extends HttpServlet {
             stringProxyHost = sur.getUrlSur();
 
             PostMethod postMethod = new PostMethod(stringProxyHost);
+                        
             //ProxyUtility.setProxyRequestHeaders(request, postMethod, stringProxyHost);
 
             // Check if BASIC authentication is needed
             if ((sur.getPswSur() != null && !sur.getPswSur().equalsIgnoreCase(""))
                     || (sur.getUsrSur() != null && !sur.getUsrSur().equalsIgnoreCase(""))) {
-                byte[] b = org.apache.commons.codec.binary.Base64.encodeBase64((sur.getUsrSur() + ":" + sur.getPswSur()).getBytes());
-                postMethod.setRequestHeader(new Header("Authorization", "BASIC " + b.toString()));
+                postMethod.setRequestHeader(new Header("Authorization", "Basic " + new String(
+                        Base64.encodeBase64((sur.getUsrSur() + ":" + sur.getPswSur()).getBytes()))));
             }
 
             if (ServletFileUpload.isMultipartContent(request)) {
@@ -126,6 +128,7 @@ public class WMSProxy extends HttpServlet {
                 HttpClient httpClient = new HttpClient();
 
                 int status = httpClient.executeMethod(postMethod);
+                                
                 response.setStatus(status);
 
                 // Setting response headers
