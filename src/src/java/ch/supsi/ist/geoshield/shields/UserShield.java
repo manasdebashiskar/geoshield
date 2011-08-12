@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Enumeration;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -67,19 +68,20 @@ public class UserShield implements Filter {
 
         // @todo check if channel is secured
         // request.isSecure();
-        /*System.out.println("\n--------------------------------");
+        System.out.println("\n--------------------------------");
         System.out.println("Headers summary:");
         Enumeration h = req.getHeaderNames();
         while (h.hasMoreElements()) {
             String object = (String)h.nextElement();
             System.out.println(object + " " + req.getHeader(object));
         }
-        System.out.println("--------------------------------\n");*/
+        System.out.println("--------------------------------\n");
         
         String path = req.getPathInfo();
 
         // If asked a public url it is not needed to authenticate
         if (path.equalsIgnoreCase("/public")) {
+            
             Users usr = null;
             try {
                 usr = (Users) req.getSession().getAttribute("publicUser");
@@ -93,6 +95,7 @@ public class UserShield implements Filter {
                 req.getSession().setAttribute("publicUser", usr);
                 dm.close();
             }
+            
         } else {
 
             Users usr = null;
@@ -190,7 +193,7 @@ public class UserShield implements Filter {
                 wrappedResponse.sendError(ResponseWrapper.SC_FORBIDDEN);
                 response.getWriter().close();
             } else if (((UserException) t).getCode().equals(UserException.LOGIN_ATTEMPT_FAILED)) {
-                wrappedResponse.setHeader("WWW-Authenticate", "BASIC realm=\"GeoShield: Istituto Scienze della Terra SUPSI\"");
+                wrappedResponse.setHeader("WWW-Authenticate", "BASIC realm=\"GeoShield Realm\"");
                 wrappedResponse.sendError(ResponseWrapper.SC_UNAUTHORIZED);
                 response.getWriter().close();
             }

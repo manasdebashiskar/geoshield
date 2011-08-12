@@ -68,7 +68,7 @@ public class UserAccountCtr extends HttpServlet {
             if (req.equalsIgnoreCase("users")) {
                 try {
                     List<Users> usrs = dm.getUsers();
-                    dm.refreshList(usrs);
+                    //dm.refreshList(usrs);
                     JSONSerializer json = new JSONSerializer();
                     json = json.transform(new DateTransformer("dd/MM/yyyy"), "groupsUsers.expirationGus");
 
@@ -95,6 +95,7 @@ public class UserAccountCtr extends HttpServlet {
                 }
             } else if (req.equalsIgnoreCase("groupUsers")) {
                 try {
+
                     String idGus = Utility.getHttpParam("idUsr", request);
                     List<GroupsUsers> gus = null;
                     if (idGus != null && !idGus.equalsIgnoreCase("")) {
@@ -105,7 +106,6 @@ public class UserAccountCtr extends HttpServlet {
                     JSONSerializer json = new JSONSerializer();
                     json = json.transform(new DateTransformer("dd/MM/yyyy"), "expirationGus");
                     out.println(json.exclude("*.class").exclude("idUsrFk").serialize("groupUsers", gus));
-
 
                 } catch (Exception e) {
                     out.println(e.toString());

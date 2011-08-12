@@ -19,6 +19,7 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.persistence.NoResultException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -27,8 +28,7 @@ import org.opengis.filter.Filter;
 import org.geotools.filter.text.cql2.CQL;
 
 /**
- *
- * @author milan
+ * @author Milan Antonovic - Istituto Scienze della Terra, SUPSI
  */
 public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
 
@@ -46,78 +46,114 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
         res.setContentType("text/html;charset=UTF-8");
         PrintWriter out = res.getWriter();
         try {
-            System.out.println("\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-            String user = req.getParameter("user");
-            String password = req.getParameter("password");
-            String layer = req.getParameter("layer");
-            String request = req.getParameter("request");
-            String service = req.getParameter("service");
-            String url = req.getParameter("url");
-
-            System.out.println(">>> Serlet:");
-            System.out.println("user: " + user);
-            System.out.println("password: " + password);
-            System.out.println("layer: " + layer);
-            System.out.println("request: " + request);
-            System.out.println("service: " + service);
-            System.out.println("url: " + url);
-
 
             AuthorityManager am = new AuthorityManager();
             dm = Utility.getDmSession(req);
-
-            ServicesUrls sur = dm.getServicesUrlsByPathIdSrv("/demo", service);
-            System.out.println("ServicesUrls: " + sur);
-            System.out.println("ServicesUrls: " + sur.getUrlSur());
-            //Users usr = dm.getAuthUser(user+":"+password);
-            Users usr = dm.getAuthUser(user+":"+password);
-            System.out.println("USER: " + usr.getFirstNameUsr() + " " + usr.getLastNameUsr());
-
-            Requests reqs = dm.getRequestByNameReqNameSrv(request, service);
-            System.out.println("Request: " + reqs.getNameReq());
-            if (am.checkUsrAuthOnSrvSurReq(usr, sur, reqs, dm)) {
-                System.out.println("ACCESS GRANTED");
-                /*throw new ServletException("User " + usr.getNameUsr() + " is not authorized to make"
-                + " REQUEST '" + request + "' on SERVICE '" + service + "' for the given "
-                + " PATH '/demo'.");*/
-                String[] layers = {
-                    layer
-                };
-
-                List<Layers> lays = dm.getLayers("/demo", layers, "WMS");
-
-                System.out.println(lays);
-
-                FilterAuth fau = new FilterAuth();
-                Filter f = fau.getFilter(usr, lays.get(0), dm);
-
-                if (f.toString().equalsIgnoreCase("Filter.INCLUDE")) {
-                    out.println("INCLUDE");
-                } else {
-                    System.out.println("Filter: " + f.toString());
-                    System.out.println("CQL: " + CQL.toCQL(f));
-                    out.println(CQL.toCQL(f));
-                }
+            
+            List<ServicesUrls> surs = dm.getServicesUrls();
+            
+            
+            
+            // Intercept GeoServer's question
+            String question = req.getParameter("question");
+            
+            if (question == null) {
+                out.print("question unknown");
                 
-            } else {
-                System.out.println("ACCESS DENIED");
-                out.println("EXCLUDE");
-            }
+            } else if (question.equalsIgnoreCase("USEREXIST")) {
 
+                String user = req.getParameter("user");
+                String password = req.getParameter("password");
+                try {
+                    Users usr = dm.getAuthUser(user + ":" + password);
+                    if (!usr.getIsActiveUsr().booleanValue()) {
+                        out.print("inactive");
+                    } else {
+                        out.print("true");
+                    }
+                } catch (NoResultException e) {
+                    out.print("false");
+                }
+
+            } else if (question.equalsIgnoreCase("GETFILTER")) {
+
+
+                String user = req.getParameter("user");
+                String password = req.getParameter("password");
+                String layer = req.getParameter("layer");
+                String request = req.getParameter("request");
+                String service = req.getParameter("service");
+                String url = req.getParameter("url");
+
+                /*System.out.println(">>> Serlet:");
+                System.out.println("user: " + user);
+                System.out.println("password: " + password);
+                System.out.println("layer: " + layer);
+                System.out.println("request: " + request);
+                System.out.println("service: " + service);
+                System.out.println("url: " + url);
+                System.out.println("path: " + req.getServletPath());
+                System.out.println("path: " + req.getContextPath());*/
+
+
+                ServicesUrls sur = dm.getServicesUrlsByPathIdSrv("/demo", service);
+                /*System.out.println("ServicesUrls: " + sur);
+                System.out.println("ServicesUrls: " + sur.getUrlSur());*/
+                //Users usr = dm.getAuthUser(user+":"+password);
+                Users usr = dm.getAuthUser(user + ":" + password);
+                //System.out.println("USER: " + usr.getFirstNameUsr() + " " + usr.getLastNameUsr());
+
+                Requests reqs = dm.getRequestByNameReqNameSrv(request, service);
+                //System.out.println("Request: " + reqs.getNameReq());
+                if (am.checkUsrAuthOnSrvSurReq(usr, sur, reqs, dm)) {
+                    //System.out.println("ACCESS GRANTED");
+
+                    if (request.equalsIgnoreCase("GETCAPABILITIES")) {
+                        out.print("INCLUDE");
+                    } else {
+
+                        String[] layers = {
+                            layer
+                        };
+
+                        List<Layers> lays = dm.getLayers("/demo", layers, "WMS");
+
+                        //System.out.println(lays);
+
+                        FilterAuth fau = new FilterAuth();
+                        Filter f = fau.getFilter(usr, lays.get(0), dm);
+
+                        if (f.toString().equalsIgnoreCase("Filter.INCLUDE")) {
+                            out.print("INCLUDE");
+                        } else {
+                            //System.out.println("Filter: " + f.toString());
+                            //System.out.println("CQL: " + CQL.toCQL(f));
+                            out.print(CQL.toCQL(f));
+                        }
+                    }
+                } else {
+                    //System.out.println("ACCESS DENIED");
+                    out.println("EXCLUDE");
+                }
+
+            }
             //out.println("BBOX(the_geom,-113.42272,29.92247,-75.67387,49.99073) AND FEMALE > MALE");
             //out.println("BBOX(the_geom,-113.42272,29.92247,-75.67387,49.99073)");
 
-            System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n");
+            //System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n");
 
         } catch (UserException ex) {
             System.err.println("UserException Error: " + ex.toString());
+            out.println("EXCLUDE");
             //Logger.getLogger(GeoshieldResourceAccessManagerCtr.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ServiceException ex) {
             System.err.println("ServiceException Error: " + ex.toString());
+            out.println("EXCLUDE");
             //Logger.getLogger(GeoshieldResourceAccessManagerCtr.class.getName()).log(Level.SEVERE, null, ex);
         } catch (Exception ex) {
             System.err.println("Exception Error: " + ex.toString());
-            Logger.getLogger(GeoshieldResourceAccessManagerCtr.class.getName()).log(Level.SEVERE, null, ex);
+            out.println("EXCLUDE");
+            //Logger.getLogger(GeoshieldResourceAccessManagerCtr.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             out.close();
         }
