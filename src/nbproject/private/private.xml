@@ -2,8 +2,8 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/1">
         <file>
-            <url>src/java/ch/supsi/ist/interceptor/Proxy.java</url>
-            <line>469</line>
+            <url>src/java/ch/supsi/ist/geoshield/data/DataManager.java</url>
+            <line>416</line>
         </file>
         <file>
             <url>src/java/ch/supsi/ist/interceptor/shields/wfs/WfsShield.java</url>
@@ -15,8 +15,8 @@
             <line>392</line>
         </file>
         <file>
-            <url>src/java/ch/supsi/ist/geoshield/data/DataManager.java</url>
-            <line>452</line>
+            <url>src/java/ch/supsi/ist/interceptor/Proxy.java</url>
+            <line>469</line>
         </file>
     </editor-bookmarks>
 </project-private>

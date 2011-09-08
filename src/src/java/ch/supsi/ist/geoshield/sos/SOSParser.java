@@ -31,7 +31,6 @@ package ch.supsi.ist.geoshield.sos;
 import ch.supsi.ist.geoshield.exception.ServiceException;
 import ch.supsi.ist.geoshield.parser.OGCParser;
 import ch.supsi.ist.geoshield.shields.RequestWrapper;
-import ch.supsi.ist.geoshield.utils.Utility;
 import java.util.HashMap;
 
 /**
@@ -50,6 +49,7 @@ public class SOSParser  extends OGCParser {
         HashMap<String, String[]> kvp = (HashMap<String, String[]>) request.getParameterMap();
         HashMap<String, String> ret = new HashMap<String, String>();
 
+        
         for (String s : kvp.keySet()) {
             String[] tmp = kvp.get(s);
             if (tmp.length == 1) {

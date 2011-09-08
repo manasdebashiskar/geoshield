@@ -255,7 +255,7 @@ public class WMSShield implements Filter {
             if (root == null) {
                 throw new ServiceException("Document has no root element");
             }
-            String tag = root.getLocalName();
+            String rootName = root.getLocalName();
 
             NodeList gNl = doc.getElementsByTagName("OnlineResource");
             for (int i = 0; i < gNl.getLength(); i++) {

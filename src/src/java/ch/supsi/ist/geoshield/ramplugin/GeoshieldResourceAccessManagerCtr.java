@@ -49,17 +49,17 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
 
             AuthorityManager am = new AuthorityManager();
             dm = Utility.getDmSession(req);
-            
+
             List<ServicesUrls> surs = dm.getServicesUrls();
-            
-            
-            
+
+
+
             // Intercept GeoServer's question
             String question = req.getParameter("question");
-            
+
             if (question == null) {
                 out.print("question unknown");
-                
+
             } else if (question.equalsIgnoreCase("USEREXIST")) {
 
                 String user = req.getParameter("user");
@@ -95,8 +95,7 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
                 System.out.println("path: " + req.getServletPath());
                 System.out.println("path: " + req.getContextPath());*/
 
-
-                ServicesUrls sur = dm.getServicesUrlsByPathIdSrv("/demo", service);
+                ServicesUrls sur = dm.getServicesUrlsByPathIdSrv("/map", service);
                 /*System.out.println("ServicesUrls: " + sur);
                 System.out.println("ServicesUrls: " + sur.getUrlSur());*/
                 //Users usr = dm.getAuthUser(user+":"+password);
@@ -116,24 +115,30 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
                             layer
                         };
 
-                        List<Layers> lays = dm.getLayers("/demo", layers, "WMS");
+                        List<Layers> lays = dm.getLayers("/map", layers, "WMS");
 
                         //System.out.println(lays);
 
                         FilterAuth fau = new FilterAuth();
                         Filter f = fau.getFilter(usr, lays.get(0), dm);
 
+                        System.out.println("Filter: " + f.toString());
+                        System.out.println("CQL: " + CQL.toCQL(f));
+
+
                         if (f.toString().equalsIgnoreCase("Filter.INCLUDE")) {
                             out.print("INCLUDE");
+                        } else if (f.toString().equalsIgnoreCase("Filter.EXCLUDE")) {
+                            out.print("EXCLUDE");
+                        } else if (CQL.toCQL(f).equalsIgnoreCase("mb = ma")) {
+                            out.print("EXCLUDE");
                         } else {
-                            //System.out.println("Filter: " + f.toString());
-                            //System.out.println("CQL: " + CQL.toCQL(f));
                             out.print(CQL.toCQL(f));
                         }
                     }
                 } else {
                     //System.out.println("ACCESS DENIED");
-                    out.println("EXCLUDE");
+                    out.print("EXCLUDE");
                 }
 
             }
@@ -144,15 +149,15 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
 
         } catch (UserException ex) {
             System.err.println("UserException Error: " + ex.toString());
-            out.println("EXCLUDE");
+            out.print("EXCLUDE");
             //Logger.getLogger(GeoshieldResourceAccessManagerCtr.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ServiceException ex) {
             System.err.println("ServiceException Error: " + ex.toString());
-            out.println("EXCLUDE");
+            out.print("EXCLUDE");
             //Logger.getLogger(GeoshieldResourceAccessManagerCtr.class.getName()).log(Level.SEVERE, null, ex);
         } catch (Exception ex) {
             System.err.println("Exception Error: " + ex.toString());
-            out.println("EXCLUDE");
+            out.print("EXCLUDE");
             //Logger.getLogger(GeoshieldResourceAccessManagerCtr.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             out.close();

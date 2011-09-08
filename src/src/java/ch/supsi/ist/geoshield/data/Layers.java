@@ -106,11 +106,11 @@ public class Layers implements Serializable {
     private String geomLay;
 
     @Basic(optional = false)
-    @Column(name = "ns_lay", nullable = false, length = 20)
+    @Column(name = "ns_lay", nullable = false, length = 50)
     private String nsLay;
 
     @Basic(optional = false)
-    @Column(name = "ns_url_lay", nullable = false, length = 20)
+    @Column(name = "ns_url_lay", nullable = false, length = 50)
     private String nsUrlLay;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "idLayFk", fetch=FetchType.EAGER)

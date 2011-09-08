@@ -25,16 +25,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package ch.supsi.ist.geoshield.test;
 
 import ch.supsi.ist.geoshield.data.DataManager;
 import ch.supsi.ist.geoshield.data.Groups;
 import ch.supsi.ist.geoshield.data.Layers;
 import ch.supsi.ist.geoshield.data.LayersPermissions;
+import ch.supsi.ist.geoshield.data.Offerings;
 import ch.supsi.ist.geoshield.data.Users;
+import ch.supsi.ist.geoshield.exception.ServiceException;
+import ch.supsi.ist.geoshield.sos.SOSUtils;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -64,6 +68,19 @@ public class TestDataManager {
                 System.out.println("     - " + lay.getNameLay());
             }
         }
+
+        try {
+            List<Offerings> offs = SOSUtils.getOfferings(usr);
+            System.out.println("\nOFFERINGS:");
+            for (Iterator<Offerings> it = offs.iterator(); it.hasNext();) {
+                Offerings offerings = it.next();
+                System.out.println(" > " + offerings.getNameOff());
+            }
+        } catch (ServiceException ex) {
+            Logger.getLogger(TestDataManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+
         dm.close();
     }
 }

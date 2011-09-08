@@ -2,7 +2,7 @@ Ext.ns("GeoShield","GeoShield.ServicesUrls");
 
 GeoShield.ServicesUrls.ComboBox = Ext.extend(Ext.form.ComboBox, {
     initComponent: function(config) {
-        this.fieldLabel= 'Available Service';
+        this.fieldLabel= 'Available WMS and WFS';
         this.hiddenName='idSur';
         this.forceSelection= false;
         this.allowBlank=false;
@@ -43,7 +43,7 @@ GeoShield.ServicesUrls.Store = function() {
                 this.store = new Ext.data.JsonStore({
                     url: './admin/ServicesManagerCtr',
                     baseParams: {
-                        REQUEST: "servicesUrls"
+                        REQUEST: "wmswfsSurls"
                     },
                     root: 'servicesUrls',
                     fields: [

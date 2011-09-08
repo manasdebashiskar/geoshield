@@ -25,6 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 package ch.supsi.ist.geoshield.servlet.admin;
 
 import ch.supsi.ist.geoshield.data.DataManager;
@@ -69,10 +70,53 @@ public class ServicesManagerCtr extends HttpServlet {
             String[] filterArr = null;
             if (filter != null) {
                 filterArr = filter.split(";");
-                //System.out.println("Filter[0]=" + filterArr[0]);
-                //System.out.println("Filter[1]=" + filterArr[1]);
             }
             if (req.equalsIgnoreCase("servicesUrls")) {
+                try {
+                    List<ServicesUrls> srvUrls = dm.getServicesUrls();
+
+                    /*for (Iterator<ServicesUrls> it = srvUrls.iterator(); it.hasNext();) {
+                        ServicesUrls sur = it.next();
+                        if (sur.getIdSrvFk().getNameSrv().equalsIgnoreCase("SOS")) {
+                            it.remove();
+                        }
+                    }*/
+                    
+                    if (filterArr != null) {
+                        for (Iterator<ServicesUrls> it = srvUrls.iterator(); it.hasNext();) {
+                            ServicesUrls sur = it.next();
+                            if (filterArr[0].equalsIgnoreCase("idGrp")) {
+                                List<ServicesPermissions> lpr = sur.getSprList();
+                                boolean rem = true;
+                                for (Iterator<ServicesPermissions> itSpr = lpr.iterator(); itSpr.hasNext();) {
+                                    ServicesPermissions spr = itSpr.next();
+                                    if (spr.getIdGrpFk().getIdGrp() == Integer.parseInt(filterArr[1])) {
+                                        rem = false;
+                                        break;
+                                    }
+                                }
+                                if (rem) {
+                                    it.remove();
+                                }
+                            } else {
+                                if (sur.getIdSrvFk().getIdSrv() != Integer.parseInt(filterArr[1])) {
+                                    //System.out.println("removing idSrv " + sur.getPathSur());
+                                    it.remove();
+                                }
+                            }
+                        }
+                    }
+
+                    JSONSerializer json = new JSONSerializer();
+                    //System.out.println("JSON:\n" + json.exclude("*.class").prettyPrint("servicesUrls", srvUrls));
+                    out.println(json.exclude("*.class").serialize("servicesUrls", srvUrls));
+
+                } catch (Exception e) {
+                    out.println(e.toString());
+                } finally {
+                    dm.close();
+                }
+            } else if (req.equalsIgnoreCase("wmswfsSurls")) {
                 try {
                     List<ServicesUrls> srvUrls = dm.getServicesUrls();
 
