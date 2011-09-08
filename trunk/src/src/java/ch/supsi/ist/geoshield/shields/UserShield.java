@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Enumeration;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -49,7 +48,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 /**
- * @author Milan Antonovic, Massimiliano Cannata - Istituto Scienze della Terra, SUPSI
+ * @author Milan P. Antonovic, Massimiliano Cannata - Istituto Scienze della Terra, SUPSI
  */
 
 public class UserShield implements Filter {
@@ -68,20 +67,22 @@ public class UserShield implements Filter {
 
         // @todo check if channel is secured
         // request.isSecure();
-        System.out.println("\n--------------------------------");
+        /*System.out.println("\n--------------------------------");
         System.out.println("Headers summary:");
         Enumeration h = req.getHeaderNames();
         while (h.hasMoreElements()) {
             String object = (String)h.nextElement();
             System.out.println(object + " " + req.getHeader(object));
         }
-        System.out.println("--------------------------------\n");
+        System.out.println("--------------------------------\n");*/
         
         String path = req.getPathInfo();
-
+        
+        DataManager cdm = (DataManager)req.getAttribute(
+                CacheFilter.GEOSHIELD_DATAMANAGER);
+        
         // If asked a public url it is not needed to authenticate
         if (path.equalsIgnoreCase("/public")) {
-            
             Users usr = null;
             try {
                 usr = (Users) req.getSession().getAttribute("publicUser");
@@ -90,12 +91,14 @@ public class UserShield implements Filter {
                 usr = null;
             }
             if (usr == null) {
-                DataManager dm = new DataManager();
+                /*DataManager dm = new DataManager();
                 usr = dm.getUser("public");
                 req.getSession().setAttribute("publicUser", usr);
-                dm.close();
+                dm.close();*/
+                usr = cdm.getUser("public");
+                req.setAttribute("publicUser", usr);
+                req.getSession().setAttribute("publicUser", usr);
             }
-            
         } else {
 
             Users usr = null;
@@ -126,7 +129,7 @@ public class UserShield implements Filter {
                     session = req.getSession();
                 }
 
-                try {
+                /*try {
                     if (req.getSession().getAttribute("datamanager") == null) {
                         req.getSession().setAttribute("datamanager", new DataManager());
                     }else{
@@ -138,13 +141,12 @@ public class UserShield implements Filter {
                     }
                 } catch (IllegalStateException e) {
                     System.err.println(e.toString());
-                }
+                }*/
 
                 //String auth = req.getHeader("Authorization");
                 AuthorityManager am = new AuthorityManager();
                 usr = am.WWWAuthenticate(req);
 
-                am.close();
                 if (usr == null) {
                     System.out.println("User is NULL");
                     if (session.getAttribute("login") == null) {
@@ -163,8 +165,12 @@ public class UserShield implements Filter {
                                 UserException.INVALID_USER_OR_PASSWORD);
                     }
                 } else {
-                    System.out.println("User is " + usr.getLastNameUsr());
+                    System.out.println("User is " + usr.getNameUsr());
                     session.setAttribute("user", usr);
+                    
+                    // @todo check Issue: http://code.google.com/p/geoshield/issues/detail?id=2
+                    req.setAttribute("user", usr);
+                    
                     session.setAttribute("login", new Integer(1));
                 }
             }

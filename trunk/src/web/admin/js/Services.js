@@ -35,7 +35,7 @@ GeoShield.Services.Grid = Ext.extend(Ext.grid.GridPanel, {
             sortable: true
         },
         {
-            header: "Adress",
+            header: "Address",
             width: 50,
             dataIndex: 'urlSur',
             sortable: true

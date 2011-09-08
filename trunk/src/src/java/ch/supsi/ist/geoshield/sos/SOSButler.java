@@ -76,28 +76,33 @@ public class SOSButler implements Filter {
         }
     }
 
-    private void handleGetRequest(RequestWrapper request, ResponseWrapper response) throws IOException, ServiceException {
-
+    private void handleGetRequest(RequestWrapper request, ResponseWrapper response) 
+            throws IOException, ServiceException {
+        
         parser = new SOSParser();
         Object o = parser.parseGet(request);
         request.getSession().setAttribute(OGCParser.OBJREQ, o);
-
+        
+        request.setAttribute(OGCParser.OBJREQ, o);
+        
     }
 
-    private void handlePostRequest(RequestWrapper request, ResponseWrapper response) throws IOException, ServiceException {
+    private void handlePostRequest(RequestWrapper request, ResponseWrapper response) 
+            throws IOException, ServiceException {
 
         parser = new SOSParser();
         Object o = parser.parsePost(request);
         request.getSession().setAttribute(OGCParser.OBJREQ, o);
-
+        
+        request.setAttribute(OGCParser.OBJREQ, o);
 
     }
 
     private void doAfterProcessing(RequestWrapper request, ResponseWrapper response)
             throws IOException, ServletException, ServiceException {
 
-        byte[] byts = (byte[]) request.getSession().getAttribute(OGCParser.BYTRES);
-        String encoding = (String) request.getSession().getAttribute(OGCParser.ENCRES);
+        byte[] byts = (byte[]) request.getAttribute(OGCParser.BYTRES);
+        String encoding = (String) request.getAttribute(OGCParser.ENCRES);
 
         if (encoding != null) {
 

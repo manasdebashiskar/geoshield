@@ -38,10 +38,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.DeflaterInputStream;
@@ -53,12 +49,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
 
 /**
- *
- * @author Milan Antonovic
+ * @author Milan Antonovic - Istituto Scienze della Terra, SUPSI
  */
 public class SOSProxy extends HttpServlet {
 
@@ -90,7 +84,7 @@ public class SOSProxy extends HttpServlet {
             if ((sur.getPswSur() != null && !sur.getPswSur().equalsIgnoreCase(""))
                     || (sur.getUsrSur() != null && !sur.getUsrSur().equalsIgnoreCase(""))) {
                 byte[] b = org.apache.commons.codec.binary.Base64.encodeBase64((sur.getUsrSur() + ":" + sur.getPswSur()).getBytes());
-                getMethod.setRequestHeader(new Header("Authorization", "BASIC " + b.toString()));
+                getMethod.setRequestHeader(new Header("Authorization", "Basic " + b.toString()));
             }
 
             if (ServletFileUpload.isMultipartContent(request)) {
@@ -109,12 +103,14 @@ public class SOSProxy extends HttpServlet {
                 ProxyUtility.setProxyResponseHeaders(response, getMethod);
 
                 Header[] hs = getMethod.getResponseHeaders();
-                request.getSession().setAttribute(OGCParser.ENCRES, null);
+                //request.getSession().setAttribute(OGCParser.ENCRES, null);
+                request.setAttribute(OGCParser.ENCRES, null);
                 String encoding = "";
                 for (int i = 0; i < hs.length; i++) {
                     Header h = hs[i];
                     if (h.getName().equalsIgnoreCase("Content-Encoding")) {
-                        request.getSession().setAttribute(OGCParser.ENCRES, h.getValue());
+                        //request.getSession().setAttribute(OGCParser.ENCRES, h.getValue());
+                        request.setAttribute(OGCParser.ENCRES, h.getValue());
                         encoding = h.getValue();
                         break;
                     }
@@ -147,7 +143,8 @@ public class SOSProxy extends HttpServlet {
                     byte[] by = outStream.toByteArray();
 
                     // Saving byte response into session memory (think something better..)
-                    request.getSession().setAttribute(OGCParser.BYTRES, by);
+                    //request.getSession().setAttribute(OGCParser.BYTRES, by);
+                    request.setAttribute(OGCParser.BYTRES, by);
 
                 } else {
                     InputStream inputStreamProxyResponse = getMethod.getResponseBodyAsStream();

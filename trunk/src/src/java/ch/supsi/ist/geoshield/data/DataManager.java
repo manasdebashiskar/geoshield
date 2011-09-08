@@ -60,14 +60,13 @@ import org.xml.sax.SAXException;
 public class DataManager {
 
     // CREATE  emf.createEntityManager(); on class initialization
-    static EntityManagerFactory emf = Persistence.createEntityManagerFactory("GeoshieldPU");
-    static EntityManager entMan = emf.createEntityManager();
+    
+    private EntityManagerFactory emf;
+    private EntityManager entMan;
 
     public DataManager() {
-        if (!this.isOpen()) {
-            System.out.println(" > Recreating on initializati9on");
-            this.recreate();
-        }
+        emf = Persistence.createEntityManagerFactory("GeoshieldPU");
+        entMan = emf.createEntityManager();
     }
 
     // APPLICATION ----------------------------------------
@@ -285,7 +284,7 @@ public class DataManager {
                         + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
             }
         }
-        this.refreshList(lays);
+        //this.refreshList(lays);
         return lays;
     }
 
@@ -301,31 +300,16 @@ public class DataManager {
         List<ServicesUrls> ret = query.getResultList();
         return ret;
     }
-    /*
-    public synchronized ServicesUrls getServicesUrlsByPath(String path) throws ServiceException {
-    //EntityManager em = emf.createEntityManager();
-    Query query = entMan.createNamedQuery("ServicesUrls.findByPathSur");
-    query.setParameter("pathSur", path);
-    ServicesUrls ret = null;
-    try {
-    ret = (ServicesUrls) query.getSingleResult();
-    entMan.refresh(ret);
-    } catch (NoResultException e) {
-    throw new ServiceException("Sorry, the requested path '" + path + "' are "
-    + "not handled by this GSS.", ServiceException.INVALID_SERVER_URL);
-    }
-    return ret;
-    }*/
-
+    
     public synchronized ServicesUrls getServicesUrlsByPathIdSrv(String path, String service) throws ServiceException {
         //EntityManager em = emf.createEntityManager();
-        Query query = entMan.createNamedQuery("ServicesUrls.findByPathSurIdSrv");
+        Query query = getEntitiymanager().createNamedQuery("ServicesUrls.findByPathSurIdSrv");
         query.setParameter("pathSur", path);
         query.setParameter("idSrvFk", this.getServiceByName(service));
         ServicesUrls ret = null;
         try {
             ret = (ServicesUrls) query.getSingleResult();
-            entMan.refresh(ret);
+            //entMan.refresh(ret);
         } catch (NoResultException e) {
             throw new ServiceException("Sorry, the requested path '" + path + "' are "
                     + "not handled by this GSS.", ServiceException.INVALID_SERVER_URL);
@@ -345,7 +329,7 @@ public class DataManager {
     }
 
     public synchronized Services getServiceByName(String name) throws ServiceException {
-        Query query = entMan.createNamedQuery("Services.findByNameSrv");
+        Query query = getEntitiymanager().createNamedQuery("Services.findByNameSrv");
         query.setParameter("nameSrv", name);
         Services ret = null;
         try {
@@ -371,25 +355,8 @@ public class DataManager {
     public synchronized ServicesPermissions getServicePermissionBySurGrp(
             int idSurFk, int idGrpFk)
             throws NoResultException {
-        //System.out.println("idSurFk: " + idSurFk);
-        //System.out.println("idGrpFk: " + idGrpFk);
-        //Groups g = entMan.find(Groups.class, idGrpFk);
         Groups g = this.getGroup(idGrpFk);
-        /*Query query = entMan.createNamedQuery("Groups.findByIdGrp");
-        query.setParameter("idGrp", idGrpFk);
-        Groups g = (Groups) query.getSingleResult();*/
-        //System.out.println("Found group: " + g.getNameGrp());
-
-
-        //ServicesUrls s = entMan.find(ServicesUrls.class, idSurFk);
-        ServicesUrls s = this.getServicesUrls(idSurFk);
-        /*query = null;
-        query = entMan.createNamedQuery("ServicesUrls.findByIdSur");
-        query.setParameter("idSur", idSurFk);
-        ServicesUrls s  = (ServicesUrls) query.getSingleResult();*/
-        //System.out.println("Found serviceUrl: " + s.getPathSur());
-
-        //query = null;
+        ServicesUrls s = this.getServicesUrls(idSurFk);        
         Query query = entMan.createNamedQuery("ServicesPermissions.findBySurGrp");
         query.setParameter("idGrpFk", g);
         query.setParameter("idSurFk", s);
@@ -403,9 +370,6 @@ public class DataManager {
         Groups g = entMan.find(Groups.class, idGrpFk);
         Requests r = entMan.find(Requests.class, idReqFk);
         ServicesUrls s = entMan.find(ServicesUrls.class, idSurFk);
-        /*System.out.println("Group: " + g.getNameGrp());
-        System.out.println("Requests: " + r.getNameReq());
-        System.out.println("ServicesUrls: " + s.getUrlSur());*/
         Query query = entMan.createNamedQuery("ServicesPermissions.findByGrpReqSur");
         query.setParameter("idGrpFk", g);
         query.setParameter("idReqFk", r);
@@ -546,14 +510,16 @@ public class DataManager {
         return ret;
     }
 
-    public synchronized OfferingsPermissions getOfferingsPermissionsByIdGrpIdLay(int idGrp, int idLay)
+    public synchronized OfferingsPermissions getOfferingsPermissionsByIdGrpIdLay(
+            int idGrp, int idLay)
             throws NoResultException {
         Offerings o = entMan.find(Offerings.class, idLay);
         Groups g = entMan.find(Groups.class, idGrp);
         return getOfferingsPermissionsByGrpLay(g, o);
     }
 
-    public synchronized OfferingsPermissions getOfferingsPermissionsByGrpLay(Groups g, Offerings l)
+    public synchronized OfferingsPermissions getOfferingsPermissionsByGrpLay(
+            Groups g, Offerings l)
             throws NoResultException {
         Query query = entMan.createNamedQuery("OfferingsPermissions.findByOffAndGrp");
         query.setParameter("idOff", l);
@@ -640,15 +606,6 @@ public class DataManager {
                         new java.io.ByteArrayInputStream(f.getBytes("UTF-8"));
                 ret.add((Filter) parser.parse(xml));
             }
-            /*String info = "Found " + ret.size() + " filter.";
-            Logger.getLogger(DataManager.class.getName()).log(
-            Level.INFO, info);*/
-            // if more then one loop!
-
-            // else decode one
-
-            // else throw exception
-
         } catch (UnsupportedEncodingException ex) {
             Logger.getLogger(DataManager.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -726,9 +683,17 @@ public class DataManager {
             throw new ServiceException(e.getMessage());
         }
     }
+    
+    public EntityManager getEntitiymanager(){
+        if(isOpen()){
+            recreate();
+        }
+        return entMan;
+    }
 
     public void close() {
-        System.out.println("Closing connection..");
+        //System.out.println("Closing connection..");
+        /*
         if (entMan.isOpen()) {
             entMan.close();
             //entMan = null;
@@ -736,7 +701,7 @@ public class DataManager {
         if (emf.isOpen()) {
             emf.close();
             // emf = null;
-        }
+        }*/
     }
 
     public boolean isOpen() {
@@ -751,4 +716,5 @@ public class DataManager {
         emf = Persistence.createEntityManagerFactory("GeoshieldPU");
         entMan = emf.createEntityManager();
     }
+    
 }

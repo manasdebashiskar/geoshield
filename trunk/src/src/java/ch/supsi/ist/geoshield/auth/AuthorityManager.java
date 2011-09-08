@@ -163,7 +163,7 @@ public class AuthorityManager {
                     
                     for (Iterator<SprReq> grIt = sp.getSprReqCollection().iterator(); grIt.hasNext();) {
                         SprReq sre = grIt.next();
-
+                        //System.out.println(" sre: " + sre.getIdReqFk().getNameReq());
                         if (sre.getIdReqFk().equals(req)) {
                             dm.close();
                             return true;
@@ -270,6 +270,8 @@ public class AuthorityManager {
         }
         byte[] b = org.apache.commons.codec.binary.Base64.decodeBase64(userpassEncoded.getBytes());
         String userpassDecoded = new String(b);
+
+        //DataManager dm = Utility.getDmSession(req);
         DataManager dm = Utility.getDmSession(req);
         //System.out.println("Usint datamanger from session obj..");
         try {

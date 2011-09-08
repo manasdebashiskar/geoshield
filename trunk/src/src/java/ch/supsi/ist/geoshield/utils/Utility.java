@@ -28,6 +28,7 @@
 package ch.supsi.ist.geoshield.utils;
 
 import ch.supsi.ist.geoshield.exception.ServiceException;
+import ch.supsi.ist.geoshield.shields.CacheFilter;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -236,11 +237,23 @@ public class Utility {
     }
 
     public static ch.supsi.ist.geoshield.data.DataManager getDmSession(javax.servlet.http.HttpServletRequest req) throws IllegalStateException {
+        
+        ch.supsi.ist.geoshield.data.DataManager dm = (ch.supsi.ist.geoshield.data.DataManager) req.getAttribute(CacheFilter.GEOSHIELD_DATAMANAGER);
+        if (dm == null || !dm.isOpen()) {
+            System.out.println("recreating dm");
+            req.setAttribute(CacheFilter.GEOSHIELD_DATAMANAGER, new ch.supsi.ist.geoshield.data.DataManager());
+        }else{
+            System.out.println("NOT recreating dm");
+        }
+        System.out.println(" > returning dm");
+        return (ch.supsi.ist.geoshield.data.DataManager) req.getAttribute(CacheFilter.GEOSHIELD_DATAMANAGER);
+        
+        /*
         ch.supsi.ist.geoshield.data.DataManager dm = (ch.supsi.ist.geoshield.data.DataManager) req.getSession().getAttribute("datamanager");
         if (dm == null || !dm.isOpen()) {
             req.getSession().setAttribute("datamanager", new ch.supsi.ist.geoshield.data.DataManager());
         }
-        return (ch.supsi.ist.geoshield.data.DataManager) req.getSession().getAttribute("datamanager");
+        return (ch.supsi.ist.geoshield.data.DataManager) req.getSession().getAttribute("datamanager");*/
     }
 
     /**

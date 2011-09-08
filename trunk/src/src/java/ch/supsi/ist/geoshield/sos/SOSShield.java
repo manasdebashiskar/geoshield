@@ -28,9 +28,8 @@
 package ch.supsi.ist.geoshield.sos;
 
 import ch.supsi.ist.geoshield.auth.AuthorityManager;
-import ch.supsi.ist.geoshield.auth.FilterAuth;
 import ch.supsi.ist.geoshield.data.DataManager;
-import ch.supsi.ist.geoshield.data.Layers;
+import ch.supsi.ist.geoshield.data.Offerings;
 import ch.supsi.ist.geoshield.data.Requests;
 import ch.supsi.ist.geoshield.data.ServicesUrls;
 import ch.supsi.ist.geoshield.data.Users;
@@ -45,9 +44,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import javax.servlet.Filter;
@@ -58,29 +57,9 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.parsers.ParserConfigurationException;
-
-import net.opengis.wfs.DescribeFeatureTypeType;
-import net.opengis.wfs.FeatureTypeListType;
-import net.opengis.wfs.GetCapabilitiesType;
-import net.opengis.wfs.GetFeatureType;
-import net.opengis.wfs.QueryType;
-import net.opengis.wfs.impl.FeatureCollectionTypeImpl;
-import net.opengis.wfs.impl.FeatureTypeTypeImpl;
-import net.opengis.wfs.impl.GetFeatureTypeImpl;
-import net.opengis.wfs.impl.WFSCapabilitiesTypeImpl;
-import org.eclipse.emf.common.util.EList;
-//import org.geotools.wfs.WFS;
-import org.geotools.feature.DefaultFeatureCollection;
-import org.geotools.feature.FeatureIterator;
-//import org.geotools.wfs.v1_1.WFS;
-import org.geotools.xml.Configuration;
-import org.geotools.xml.DOMParser;
-import org.opengis.feature.Feature;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 /**
  * @author Milan Antonovic, Massimiliano Cannata - Istituto Scienze della Terra, SUPSI
@@ -88,9 +67,10 @@ import org.xml.sax.SAXException;
 public class SOSShield implements Filter {
 
     private FilterConfig filterConfig = null;
-    private Users usr = null;
-    private List<Layers> lays = null;
     private List<org.opengis.filter.Filter> permissionFilter = null;
+    private static final String NS_OWS = "http://www.opengis.net/ows/1.1";
+    private static final String NS_SOS = "http://www.opengis.net/sos/1.0";
+    private static final String NS_GML = "http://www.opengis.net/gml";
 
     public SOSShield() {
     }
@@ -107,7 +87,8 @@ public class SOSShield implements Filter {
         }
     }
 
-    private void handleGetRequest(RequestWrapper request, ResponseWrapper response) throws IOException, ServiceException, UserException {
+    private synchronized void handleGetRequest(RequestWrapper request, ResponseWrapper response)
+            throws IOException, ServiceException, UserException {
 
         System.out.println(" > SOSShield");
         DataManager dm = Utility.getDmSession(request);
@@ -118,39 +99,402 @@ public class SOSShield implements Filter {
         // Controllo se il path è stato richiesto (path!=null)
 
         ServicesUrls sur = dm.getServicesUrlsByPathIdSrv(path, "SOS");
-        usr = (Users) request.getSession().getAttribute("user");
+        Users usr = (Users) request.getAttribute("user");
 
         // Check access on serviceUrl for user
 
         HashMap<String, String> obj =
-                (HashMap<String, String>) request.getSession().getAttribute(OGCParser.OBJREQ);
+                (HashMap<String, String>) request.getAttribute(OGCParser.OBJREQ);
+        //(HashMap<String, String>) request.getSession().getAttribute(OGCParser.OBJREQ);
 
         Requests req = dm.getRequestByNameReqNameSrv(obj.get("REQUEST"), "SOS");
+        System.out.println(" > Request: " + req.getNameReq());
+        System.out.println(" > Sur: " + sur.getUrlSur());
+
         if (!am.checkUsrAuthOnSrvSurReq(usr, sur, req)) {
             throw new ch.supsi.ist.geoshield.exception.ServiceException("User " + usr.getNameUsr() + " is not authorized to make"
-                    + " REQUEST '" + request + "' on SERVICE 'sos' for the given "
+                    + " REQUEST '" + req.getNameReq() + "' on SERVICE 'sos' for the given "
                     + " PATH '" + path + "'.", ServiceException.SERVICE_AUTHENTICATION);
         }
+
+
+        List<Offerings> offs = SOSUtils.getOfferings(usr);
+        HashSet<String> offerings = SOSUtils.getOfferingsSet(usr);
+
         if (!obj.get("REQUEST").equalsIgnoreCase("GETCAPABILITIES")) {
+
+            // Ask for procedures that can be requested
             if (req.getNameReq().equalsIgnoreCase("GETOBSERVATION")) {
                 // Check if user has access to the requested offering
-                
+                String offering = obj.get("OFFERING");
+
+                System.out.println(" OFFERING: " + offering);
+
+                if (offering != null && offerings.contains(offering)) {
+                    System.out.println(" > GETOBSERVATION permitted.");
+                } else if (offering != null) {
+                    throw new ch.supsi.ist.geoshield.exception.ServiceException("User " + usr.getNameUsr() + " is not authorized to make"
+                            + " REQUEST '" + req.getNameReq() + "' on SERVICE 'sos' for the given "
+                            + " OFFERING '" + offering + "'.", ServiceException.INVALID_SERVICE_PARAMETER);
+                } else {
+                    throw new ch.supsi.ist.geoshield.exception.ServiceException("Offering parameter is mandatory.", ServiceException.INVALID_SERVICE_PARAMETER);
+                }
             } else if (req.getNameReq().equalsIgnoreCase("DESCRIBESENSOR")) {
-                // Check if user has access to the requested procedure/sensor
-                
-                // It will be necessary to make a getcapabilities (put it in session?)
-                // to check if procedure is member of the offering that the user has access
-                
+                HashMap<String, HashSet<String>> tmp = SOSUtils.getInfo(SOSUtils.getGetCapabilitiesDocument(sur), offs);
+                if (!tmp.get("procs").contains(obj.get("PROCEDURE"))) {
+                    throw new ch.supsi.ist.geoshield.exception.ServiceException("User " + usr.getNameUsr() + " is not authorized to make"
+                            + " REQUEST '" + req.getNameReq() + "' on SERVICE 'sos' for the given "
+                            + " PROCEDURE '" + obj.get("PROCEDURE") + "'.", ServiceException.INVALID_PARAMETER);
+
+                }
+            } else if (req.getNameReq().equalsIgnoreCase("GETFEATUREOFINTEREST")) {
+                HashMap<String, HashSet<String>> tmp = SOSUtils.getInfo(SOSUtils.getGetCapabilitiesDocument(sur), offs);
+                if (!tmp.get("fois").contains(Utility.getHttpParam("featureOfInterest", request))) {
+                    throw new ch.supsi.ist.geoshield.exception.ServiceException("User " + usr.getNameUsr() + " is not authorized to make"
+                            + " REQUEST '" + req.getNameReq() + "' on SERVICE 'sos' for the given "
+                            + " FEATUREOFINTEREST '" + Utility.getHttpParam("featureOfInterest", request) + "'.", ServiceException.INVALID_PARAMETER);
+
+                }
             }
         }
         System.out.println("   > end");
     }
 
-    private void doAfterProcessing(RequestWrapper request, ResponseWrapper response)
+    private synchronized void doAfterProcessing(RequestWrapper request, ResponseWrapper response)
             throws IOException, ServletException, ServiceException, UserException {
 
-        if (Utility.getHttpParam("REQUEST", request).equalsIgnoreCase("GETCAPABILITIES")) {
-            // Vedi WMSShield.java
+        if (Utility.getHttpParam("REQUEST", request).equalsIgnoreCase(
+                "GETCAPABILITIES")) {
+
+            byte[] by = (byte[]) request.getAttribute(OGCParser.BYTRES);
+            request.setAttribute(OGCParser.BYTRES, null);
+
+            String charset = "UTF-8";
+            String body = new String(by, charset);
+            //System.out.println(body);
+
+            Document doc;
+            try {
+                doc = XmlUtils.buildDocument(body);
+            } catch (Exception ex) {
+                throw new ServiceException(ex.getMessage());
+            }
+            Element root = doc.getDocumentElement();
+            if (root == null) {
+                throw new ServiceException("Document has no root element");
+            }
+
+            String rootName = root.getLocalName();
+
+
+            // Rewriting URL 
+            // ----------------------------------------------------------------<
+            NodeList gNl = doc.getElementsByTagNameNS(NS_OWS, "Get");
+            for (int i = 0; i < gNl.getLength(); i++) {
+                Element object = (Element) gNl.item(i);
+
+                String href = object.getAttribute("xlink:href");
+                if (href.indexOf("?") != -1) {
+                    if (href.split("\\?").length == 1) {
+                        object.setAttribute("xlink:href", request.getRequestURL().toString()
+                                + "?");
+                    } else if (href.split("\\?").length == 2) {
+                        object.setAttribute("xlink:href", request.getRequestURL().toString()
+                                + "?" + href.split("\\?")[1]);
+                    }
+                } else {
+                    object.setAttribute("xlink:href", request.getRequestURL().toString());
+                }
+            }
+            gNl = doc.getElementsByTagNameNS(NS_OWS, "Post");
+            for (int i = 0; i < gNl.getLength(); i++) {
+                Element object = (Element) gNl.item(i);
+
+                String href = object.getAttribute("xlink:href");
+                if (href.indexOf("?") != -1) {
+                    if (href.split("\\?").length == 1) {
+                        object.setAttribute("xlink:href", request.getRequestURL().toString()
+                                + "?");
+                    } else if (href.split("\\?").length == 2) {
+                        object.setAttribute("xlink:href", request.getRequestURL().toString()
+                                + "?" + href.split("\\?")[1]);
+                    }
+                } else {
+                    object.setAttribute("xlink:href", request.getRequestURL().toString());
+                }
+            }
+
+
+            // Procedures allowed
+            HashSet<String> procs = new HashSet<String>();
+            // Feature of interest allowed
+            HashSet<String> fois = new HashSet<String>();
+            // Observed properties allowed
+            HashSet<String> obsProp = new HashSet<String>();
+            // Observed properties allowed
+            HashSet<String> offerings = new HashSet<String>();
+
+            List<Element> toRemove = new ArrayList<Element>();
+            
+            Users usr = (Users) request.getAttribute("user");
+            List<Offerings> offs = SOSUtils.getOfferings(usr);
+
+            // Extracting offering/procedures
+            // ----------------------------------------------------------------<
+            gNl = doc.getElementsByTagNameNS(NS_SOS, "ObservationOffering");
+            for (int i = 0; i < gNl.getLength(); i++) {
+
+                Element observationOffering = (Element) gNl.item(i);
+                String gmlId = observationOffering.getAttribute("gml:id");
+
+                boolean toRemoveFlag = true;
+                for (Iterator<Offerings> it = offs.iterator(); it.hasNext();) {
+                    Offerings off = it.next();
+                    offerings.add(off.getNameOff());
+                    if (gmlId.equalsIgnoreCase(off.getNameOff())) {
+
+                        // Adding also the long name
+                        offerings.add(observationOffering.getElementsByTagNameNS(NS_GML, "name").item(0).getTextContent());
+
+                        NodeList tmp = observationOffering.getElementsByTagNameNS(NS_SOS, "procedure");
+                        //System.out.println("\nPROCEDURES: ");
+                        for (int c = 0; c < tmp.getLength(); c++) {
+                            Element procedure = (Element) tmp.item(c);
+                            //System.out.println(" > " + procedure.getAttribute("xlink:href"));
+                            procs.add(procedure.getAttribute("xlink:href"));
+                        }
+
+                        tmp = observationOffering.getElementsByTagNameNS(NS_SOS, "featureOfInterest");
+                        //System.out.println("\nFOIS: ");
+                        for (int c = 0; c < tmp.getLength(); c++) {
+                            Element procedure = (Element) tmp.item(c);
+                            //System.out.println(" > " + procedure.getAttribute("xlink:href"));
+                            fois.add(procedure.getAttribute("xlink:href"));
+                        }
+
+                        tmp = observationOffering.getElementsByTagNameNS(NS_SOS, "observedProperty");
+                        //System.out.println("\nOBSPROP: ");
+                        for (int c = 0; c < tmp.getLength(); c++) {
+                            Element procedure = (Element) tmp.item(c);
+                            //System.out.println(" > " + procedure.getAttribute("xlink:href"));
+                            obsProp.add(procedure.getAttribute("xlink:href"));
+                        }
+
+                        toRemoveFlag = false;
+                    }
+                }
+                if (toRemoveFlag) {
+                    toRemove.add(observationOffering);
+                }
+            }
+
+            gNl = doc.getElementsByTagNameNS(NS_SOS, "ObservationOfferingList");
+            if (gNl.getLength() == 1) {
+                Element ObservationOfferingList = (Element) gNl.item(0);
+                //Rimuovi quello che non serve!!!
+                //System.out.println("OFFERINGS TOREMOVE:");
+                if (toRemove.size() > 0) {
+                    for (Iterator<Element> it = toRemove.iterator(); it.hasNext();) {
+                        Element element = it.next();
+                        ObservationOfferingList.removeChild(element);
+                        //System.out.println(" > " + element.getAttribute("gml:id"));
+                    }
+                }
+            }
+
+            DataManager dm = Utility.getDmSession(request);
+            AuthorityManager am = new AuthorityManager();
+            ServicesUrls sur = dm.getServicesUrlsByPathIdSrv(request.getPathInfo(), "SOS");
+            HashMap<String, String> obj =
+                    (HashMap<String, String>) request.getAttribute(OGCParser.OBJREQ);
+            Requests req = dm.getRequestByNameReqNameSrv(obj.get("REQUEST"), "SOS");
+
+            gNl = doc.getElementsByTagNameNS(NS_OWS, "Operation");
+
+            toRemove = new ArrayList<Element>();
+            for (int i = 0; i < gNl.getLength(); i++) {
+                Element param = (Element) gNl.item(i);
+                String name = param.getAttribute("name");
+                if (!am.checkUsrAuthOnSrvSurReq(usr, sur,
+                        dm.getRequestByNameReqNameSrv(name, "SOS"))) {
+                    System.out.println(name + " > " + false);
+                    toRemove.add(param);
+                } else {
+                    System.out.println(name + " > " + true);
+                }
+            }
+            gNl = doc.getElementsByTagNameNS(NS_OWS, "OperationsMetadata");
+            if (gNl.getLength() == 1) {
+                Element OperationsMetadata = (Element) gNl.item(0);
+                //Rimuovi quello che non serve!!!
+                System.out.println("OperationsMetadata TOREMOVE:");
+                if (toRemove.size() > 0) {
+                    for (Iterator<Element> it = toRemove.iterator(); it.hasNext();) {
+                        Element element = it.next();
+                        OperationsMetadata.removeChild(element);
+                        System.out.println(" > " + element.getAttribute("name"));
+                    }
+                }
+            }
+
+
+            gNl = doc.getElementsByTagNameNS(NS_OWS, "Parameter");
+
+            for (int i = 0; i < gNl.getLength(); i++) {
+                Element param = (Element) gNl.item(i);
+
+                if (param.getAttribute("name").equalsIgnoreCase("procedure")) {
+
+                    toRemove = new ArrayList<Element>();
+
+                    NodeList tmp = param.getElementsByTagNameNS(NS_OWS, "Value");
+                    for (int c = 0; c < tmp.getLength(); c++) {
+                        Element val = (Element) tmp.item(c);
+                        //System.out.println(val.getTextContent());
+                        if (!procs.contains(val.getTextContent())) {
+                            //System.out.println(" > Removing..");
+                            toRemove.add(val);
+                        }
+                    }
+
+                    tmp = param.getElementsByTagNameNS(NS_OWS, "AllowedValues");
+                    if (toRemove.size() > 0) {
+                        for (Iterator<Element> it = toRemove.iterator(); it.hasNext();) {
+                            tmp.item(0).removeChild(it.next());
+                        }
+                    }
+
+                } else if (param.getAttribute("name").equalsIgnoreCase("AssignedSensorId")) {
+
+                    toRemove = new ArrayList<Element>();
+
+                    NodeList tmp = param.getElementsByTagNameNS(NS_OWS, "Value");
+                    for (int c = 0; c < tmp.getLength(); c++) {
+                        Element val = (Element) tmp.item(c);
+                        //System.out.println(val.getTextContent());
+                        if (!procs.contains(val.getTextContent())) {
+                            //System.out.println(" > Removing..");
+                            toRemove.add(val);
+                        }
+                    }
+
+                    tmp = param.getElementsByTagNameNS(NS_OWS, "AllowedValues");
+                    if (toRemove.size() > 0) {
+                        for (Iterator<Element> it = toRemove.iterator(); it.hasNext();) {
+                            tmp.item(0).removeChild(it.next());
+                        }
+                    }
+
+                } else if (param.getAttribute("name").equalsIgnoreCase("observedProperty")) {
+
+                    toRemove = new ArrayList<Element>();
+
+                    NodeList tmp = param.getElementsByTagNameNS(NS_OWS, "Value");
+                    for (int c = 0; c < tmp.getLength(); c++) {
+                        Element val = (Element) tmp.item(c);
+                        //System.out.println(val.getTextContent());
+                        if (!obsProp.contains(val.getTextContent())) {
+                            //System.out.println(" > Removing..");
+                            toRemove.add(val);
+                        }
+                    }
+
+                    tmp = param.getElementsByTagNameNS(NS_OWS, "AllowedValues");
+                    if (toRemove.size() > 0) {
+                        for (Iterator<Element> it = toRemove.iterator(); it.hasNext();) {
+                            tmp.item(0).removeChild(it.next());
+                        }
+                    }
+
+                } else if (param.getAttribute("name").equalsIgnoreCase("featureOfInterest")) {
+
+                    toRemove = new ArrayList<Element>();
+
+                    NodeList tmp = param.getElementsByTagNameNS(NS_OWS, "Value");
+                    for (int c = 0; c < tmp.getLength(); c++) {
+                        Element val = (Element) tmp.item(c);
+                        //System.out.println(val.getTextContent());
+                        if (!fois.contains(val.getTextContent())) {
+                            //System.out.println(" > Removing..");
+                            toRemove.add(val);
+                        }
+                    }
+
+                    tmp = param.getElementsByTagNameNS(NS_OWS, "AllowedValues");
+                    if (toRemove.size() > 0) {
+                        for (Iterator<Element> it = toRemove.iterator(); it.hasNext();) {
+                            tmp.item(0).removeChild(it.next());
+                        }
+                    }
+
+                } else if (param.getAttribute("name").equalsIgnoreCase("FeatureOfInterestId")) {
+
+                    toRemove = new ArrayList<Element>();
+
+                    NodeList tmp = param.getElementsByTagNameNS(NS_OWS, "Value");
+                    for (int c = 0; c < tmp.getLength(); c++) {
+                        Element val = (Element) tmp.item(c);
+                        //System.out.println(val.getTextContent());
+                        if (!fois.contains(val.getTextContent())) {
+                            //System.out.println(" > Removing..");
+                            toRemove.add(val);
+                        }
+                    }
+
+                    tmp = param.getElementsByTagNameNS(NS_OWS, "AllowedValues");
+                    if (toRemove.size() > 0) {
+                        for (Iterator<Element> it = toRemove.iterator(); it.hasNext();) {
+                            tmp.item(0).removeChild(it.next());
+                        }
+                    }
+
+                } else if (param.getAttribute("name").equalsIgnoreCase("FeatureId")) {
+
+                    toRemove = new ArrayList<Element>();
+
+                    NodeList tmp = param.getElementsByTagNameNS(NS_OWS, "Value");
+                    for (int c = 0; c < tmp.getLength(); c++) {
+                        Element val = (Element) tmp.item(c);
+                        //System.out.println(val.getTextContent());
+                        if (!fois.contains(val.getTextContent())) {
+                            //System.out.println(" > Removing..");
+                            toRemove.add(val);
+                        }
+                    }
+
+                    tmp = param.getElementsByTagNameNS(NS_OWS, "AllowedValues");
+                    if (toRemove.size() > 0) {
+                        for (Iterator<Element> it = toRemove.iterator(); it.hasNext();) {
+                            tmp.item(0).removeChild(it.next());
+                        }
+                    }
+
+                } else if (param.getAttribute("name").equalsIgnoreCase("offering")) {
+
+                    toRemove = new ArrayList<Element>();
+
+                    NodeList tmp = param.getElementsByTagNameNS(NS_OWS, "Value");
+                    for (int c = 0; c < tmp.getLength(); c++) {
+                        Element val = (Element) tmp.item(c);
+                        //System.out.println(val.getTextContent());
+                        if (!offerings.contains(val.getTextContent())) {
+                            //System.out.println(" > Removing..");
+                            toRemove.add(val);
+                        }
+                    }
+
+                    tmp = param.getElementsByTagNameNS(NS_OWS, "AllowedValues");
+                    if (toRemove.size() > 0) {
+                        for (Iterator<Element> it = toRemove.iterator(); it.hasNext();) {
+                            tmp.item(0).removeChild(it.next());
+                        }
+                    }
+
+                }
+            }
+
+
+            request.setAttribute(OGCParser.BYTRES, XmlUtils.xmlToString(doc).getBytes());
         }
     }
 
