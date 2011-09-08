@@ -38,6 +38,10 @@
         <url-pattern>/wms/*</url-pattern>
     </filter-mapping>
     <filter-mapping>
+        <filter-name>CacheFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
         <filter-name>UserShiled</filter-name>
         <url-pattern>/wms/*</url-pattern>
         <url-pattern>/sos/*</url-pattern>
