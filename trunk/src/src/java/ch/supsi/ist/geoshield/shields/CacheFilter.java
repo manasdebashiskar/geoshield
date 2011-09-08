@@ -56,7 +56,7 @@ public class CacheFilter implements Filter {
     private FilterConfig filterConfig = null;
     
     private HashMap<String, Map<String, Object>> geoshieldCache;
-    static private DataManager dm;
+    private DataManager dm;
     
     public CacheFilter() {
     }    
@@ -65,7 +65,6 @@ public class CacheFilter implements Filter {
             throws IOException, ServletException {
         System.out.println("Loading cache to request..");
         request.setAttribute(GEOSHIELD_CACHE, this.geoshieldCache);
-        System.out.println("Adding dm to request.. ("+ this.dm.toString());
         request.setAttribute(GEOSHIELD_DATAMANAGER, this.dm);
     }    
     
@@ -130,7 +129,6 @@ public class CacheFilter implements Filter {
         }
         this.geoshieldCache = new HashMap<String, Map<String, Object>>();
         this.dm = new DataManager();
-        System.out.println(" > Initializing dm: " + dm.toString());
     }
 
     @Override

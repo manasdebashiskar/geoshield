@@ -52,7 +52,7 @@ public class TestDataManager {
     public static void main(String[] args) {
         // TODO code application logic here
         DataManager dm = new DataManager();
-        Users usr = dm.getUser(8);
+        Users usr = dm.getUser(1);
         System.out.println("User: " + usr.getNameUsr());
         List<Groups> grps = usr.getGroups();
         //System.out.println("Groups: " + grps.size());
