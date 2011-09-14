@@ -74,6 +74,14 @@ import javax.persistence.UniqueConstraint;
                     "AND l.nameLay = :nameLay"
     ),
     @NamedQuery(
+        name = "Layers.findByUrlAndNameAndService",
+        query = "SELECT l FROM Layers l, ServicesUrls s " +
+                    "WHERE l.idSurFk.idSur = s.idSur " +
+                    "AND s.urlSur = :urlSur " +
+                    "AND s.idSrvFk = :idSrvFk " +
+                    "AND l.nameLay = :nameLay"
+    ),
+    @NamedQuery(
         name = "Layers.findByPathAndNameAndService",
         query = "SELECT l FROM Layers l, ServicesUrls s " +
                     "WHERE l.idSurFk.idSur = s.idSur " +

@@ -34,7 +34,6 @@ import ch.supsi.ist.geoshield.auth.WmsAuth;
 import ch.supsi.ist.geoshield.data.DataManager;
 import ch.supsi.ist.geoshield.data.Layers;
 import ch.supsi.ist.geoshield.data.Requests;
-import ch.supsi.ist.geoshield.data.Services;
 import ch.supsi.ist.geoshield.data.ServicesUrls;
 import ch.supsi.ist.geoshield.data.Users;
 import ch.supsi.ist.geoshield.exception.ServiceException;
@@ -84,7 +83,6 @@ public class WMSShield implements Filter {
             throws IOException, ServletException, ServiceException, UserException {
 
         dm = Utility.getDmSession(request);
-
         Throwable problem = null;
         try {
 
@@ -138,7 +136,7 @@ public class WMSShield implements Filter {
 
                 // Load the requested layer for the given path/server
                 List<Layers> lays = dm.getLayers(path, layers.split(","), "WMS");
-
+                
                 // ************************************************************
                 // Looking for user
                 // ************************************************************
@@ -183,6 +181,7 @@ public class WMSShield implements Filter {
 
                         if (filters == null) {
                             // User hasn't set filters
+                            //dm.refreshList(lays); 
                             xmlOgc = fau.getXmlStringFilters(fau.getFilters(usr, lays, dm));
                         } else if (filters != null) {
                             xmlOgc = fau.getXmlStringFilters(
@@ -192,6 +191,7 @@ public class WMSShield implements Filter {
                         }
                         //xmlOgc = StringEscapeUtils.escapeHtml(xmlOgc);
                         request.removeParameter("CQL_FILTER");
+                        //System.out.println("xmlOgc: " + xmlOgc);
                         String[] oneDimArray = {xmlOgc};
 
                         request.setParameter("FILTER", oneDimArray);
@@ -228,6 +228,7 @@ public class WMSShield implements Filter {
             // Closing the connection o database
             //dm.close();
             if (problem != null) {
+                //System.out.println("WMSShield: " + problem.getMessage());
                 throw (ch.supsi.ist.geoshield.exception.ServiceException) problem;
             }
         }

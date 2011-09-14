@@ -93,11 +93,12 @@ public class SOSProxy extends HttpServlet {
                 getMethod.setQueryString(Utility.getNameValuePairArray(request));
 
                 // Execute the request
-                getMethod.setFollowRedirects(false);
+                getMethod.setFollowRedirects(true);
                 HttpClient httpClient = new HttpClient();
 
                 int status = httpClient.executeMethod(getMethod);
                 response.setStatus(status);
+                System.out.println("RESPONSE STATUS: " + status);
 
                 // Setting response headers
                 ProxyUtility.setProxyResponseHeaders(response, getMethod);

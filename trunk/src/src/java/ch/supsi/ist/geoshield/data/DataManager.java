@@ -43,6 +43,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.FlushModeType;
 import javax.persistence.Persistence;
 import javax.persistence.Query;
 import javax.persistence.NoResultException;
@@ -67,6 +68,7 @@ public class DataManager {
     public DataManager() {
         emf = Persistence.createEntityManagerFactory("GeoshieldPU");
         entMan = emf.createEntityManager();
+        entMan.setFlushMode(FlushModeType.COMMIT);
     }
 
     // APPLICATION ----------------------------------------
@@ -268,17 +270,19 @@ public class DataManager {
     public synchronized List<Layers> getLayers(String path, String[] layers, String service)
             throws ServiceException {
         List<Layers> lays = new LinkedList<Layers>();
+        //entMan.clear();
         for (int i = 0; i < layers.length; i++) {
-            //System.out.println("Looking for: " + path + " - " + layers[i]);
+            System.out.println("Looking for: " + path + " - " + layers[i]);
             Query query = entMan.createNamedQuery("Layers.findByPathAndNameAndService");
             query.setParameter("pathSur", path);
             query.setParameter("nameLay", layers[i]);
             query.setParameter("idSrvFk", this.getServiceByName(service));
             try {
-                //Layers lay = (Layers) query.getSingleResult();
+                Layers lay = (Layers) query.getSingleResult();
                 //entMan.refresh(lay);
-                //System.out.println("  >> layer found: " + lay.getNameLay());
-                lays.add((Layers) query.getSingleResult());
+                System.out.println("  >> layer found: " + lay.getNameLay());
+                lays.add(lay);
+                //lays.add((Layers) query.getSingleResult());
             } catch (NoResultException e) {
                 throw new ServiceException("Sorry, the requested layer '" + layers[i] + "' for path '" + path
                         + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
@@ -287,7 +291,30 @@ public class DataManager {
         //this.refreshList(lays);
         return lays;
     }
-
+    
+    public synchronized List<Layers> getLayersByUrlAndNameAndService(String url, String[] layers, String service)
+            throws ServiceException {
+        List<Layers> lays = new LinkedList<Layers>();
+        for (int i = 0; i < layers.length; i++) {
+            //System.out.println("Looking for: " + path + " - " + layers[i]);
+            Query query = entMan.createNamedQuery("Layers.findByUrlAndNameAndService");
+            query.setParameter("urlSur", url);
+            query.setParameter("nameLay", layers[i]);
+            query.setParameter("idSrvFk", this.getServiceByName(service));
+            try {
+                //Layers lay = (Layers) query.getSingleResult();
+                //entMan.refresh(lay);
+                //System.out.println("  >> layer found: " + lay.getNameLay());
+                lays.add((Layers) query.getSingleResult());
+            } catch (NoResultException e) {
+                throw new ServiceException("Sorry, the requested layer '" + layers[i] + "' for path '" + url
+                        + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
+            }
+        }
+        //this.refreshList(lays);
+        return lays;
+    }
+    
     // SERVICES URLS ----------------------------------------
     public synchronized ServicesUrls getServicesUrls(int idSur)
             throws NoResultException {
@@ -312,6 +339,22 @@ public class DataManager {
             //entMan.refresh(ret);
         } catch (NoResultException e) {
             throw new ServiceException("Sorry, the requested path '" + path + "' are "
+                    + "not handled by this GSS.", ServiceException.INVALID_SERVER_URL);
+        }
+        return ret;
+    }
+    
+    public synchronized ServicesUrls getServicesUrlsByUrlIdSrv(String url, String service) throws ServiceException {
+        //EntityManager em = emf.createEntityManager();
+        Query query = getEntitiymanager().createNamedQuery("ServicesUrls.findByUrlSurIdSrv");
+        query.setParameter("urlSur", url);
+        query.setParameter("idSrvFk", this.getServiceByName(service));
+        ServicesUrls ret = null;
+        try {
+            ret = (ServicesUrls) query.getSingleResult();
+            //entMan.refresh(ret);
+        } catch (NoResultException e) {
+            throw new ServiceException("Sorry, the requested path '" + url + "' are "
                     + "not handled by this GSS.", ServiceException.INVALID_SERVER_URL);
         }
         return ret;
@@ -505,6 +548,7 @@ public class DataManager {
 
     public synchronized List<Offerings> getOfferings()
             throws NoResultException {
+        System.out.println("Flush: " + entMan.getFlushMode().toString());
         Query query = entMan.createNamedQuery("Offerings.findAll");
         List<Offerings> ret = query.getResultList();
         return ret;
@@ -715,6 +759,8 @@ public class DataManager {
     public void recreate() {
         emf = Persistence.createEntityManagerFactory("GeoshieldPU");
         entMan = emf.createEntityManager();
+        
+        entMan.setFlushMode(FlushModeType.COMMIT);
     }
     
 }

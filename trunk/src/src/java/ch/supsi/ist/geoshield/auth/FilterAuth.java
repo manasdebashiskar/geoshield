@@ -225,7 +225,8 @@ public class FilterAuth {
 
             } else if (extcl && !(spatial || other)) {
                 fils = new LinkedList<Filter>();
-                fils.add(CQL.toFilter("mb=ma"));
+                //fils.add(CQL.toFilter("mb=ma"));
+                fils.add(CQL.toFilter("fid=-1"));
                 //System.out.println("Adding only filter EXCLUDE");
             }/* else {
             for (Iterator<Groups> it = grps.iterator(); it.hasNext();) {

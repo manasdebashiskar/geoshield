@@ -33,17 +33,13 @@ import ch.supsi.ist.geoshield.data.Groups;
 import ch.supsi.ist.geoshield.data.GroupsUsers;
 import ch.supsi.ist.geoshield.data.Users;
 import ch.supsi.ist.geoshield.exception.ServiceException;
+import ch.supsi.ist.geoshield.shields.CacheFilter;
 import ch.supsi.ist.geoshield.utils.Utility;
 import flexjson.JSONSerializer;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
-import javax.persistence.Persistence;
 import javax.persistence.PersistenceContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -61,7 +57,9 @@ public class GroupAccountCtr extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
         try {
-            DataManager dm = new DataManager();
+            
+        DataManager dm = (DataManager)request.getAttribute(
+                CacheFilter.GEOSHIELD_DATAMANAGER);
             String req = Utility.getHttpParam("REQUEST", request);
             //System.out.println("GroupAccountCtr: " + req);
             if (req.equalsIgnoreCase("groups")) {
