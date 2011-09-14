@@ -111,10 +111,13 @@ public class SOSShield implements Filter {
         System.out.println(" > Request: " + req.getNameReq());
         System.out.println(" > Sur: " + sur.getUrlSur());
 
-        if (!am.checkUsrAuthOnSrvSurReq(usr, sur, req)) {
-            throw new ch.supsi.ist.geoshield.exception.ServiceException("User " + usr.getNameUsr() + " is not authorized to make"
-                    + " REQUEST '" + req.getNameReq() + "' on SERVICE 'sos' for the given "
-                    + " PATH '" + path + "'.", ServiceException.SERVICE_AUTHENTICATION);
+        try {
+            if (!am.checkUsrAuthOnSrvSurReq(usr, sur, req)) {
+                throw new ch.supsi.ist.geoshield.exception.ServiceException("User " + usr.getNameUsr() + " is not authorized to make"
+                        + " REQUEST '" + req.getNameReq() + "' on SERVICE 'sos' for the given "
+                        + " PATH '" + path + "'.", ServiceException.SERVICE_AUTHENTICATION);
+            }
+        } catch (NullPointerException e) {
         }
 
 
@@ -171,12 +174,13 @@ public class SOSShield implements Filter {
 
             String charset = "UTF-8";
             String body = new String(by, charset);
-            //System.out.println(body);
+            System.out.println(body);
 
             Document doc;
             try {
                 doc = XmlUtils.buildDocument(body);
             } catch (Exception ex) {
+                System.out.println("ERROR Building document..");
                 throw new ServiceException(ex.getMessage());
             }
             Element root = doc.getDocumentElement();
@@ -235,7 +239,7 @@ public class SOSShield implements Filter {
             HashSet<String> offerings = new HashSet<String>();
 
             List<Element> toRemove = new ArrayList<Element>();
-            
+
             Users usr = (Users) request.getAttribute("user");
             List<Offerings> offs = SOSUtils.getOfferings(usr);
 
@@ -311,16 +315,22 @@ public class SOSShield implements Filter {
 
             gNl = doc.getElementsByTagNameNS(NS_OWS, "Operation");
 
+
             toRemove = new ArrayList<Element>();
             for (int i = 0; i < gNl.getLength(); i++) {
                 Element param = (Element) gNl.item(i);
                 String name = param.getAttribute("name");
-                if (!am.checkUsrAuthOnSrvSurReq(usr, sur,
-                        dm.getRequestByNameReqNameSrv(name, "SOS"))) {
+                try {
+                    if (!am.checkUsrAuthOnSrvSurReq(usr, sur,
+                            dm.getRequestByNameReqNameSrv(name, "SOS"))) {
+                        System.out.println(name + " > " + false);
+                        toRemove.add(param);
+                    } else {
+                        System.out.println(name + " > " + true);
+                    }
+                } catch (ServiceException s) {
                     System.out.println(name + " > " + false);
                     toRemove.add(param);
-                } else {
-                    System.out.println(name + " > " + true);
                 }
             }
             gNl = doc.getElementsByTagNameNS(NS_OWS, "OperationsMetadata");

@@ -36,6 +36,7 @@ import ch.supsi.ist.geoshield.data.ServicesPermissions;
 import ch.supsi.ist.geoshield.data.ServicesUrls;
 import ch.supsi.ist.geoshield.data.SprReq;
 import ch.supsi.ist.geoshield.exception.ServiceException;
+import ch.supsi.ist.geoshield.shields.CacheFilter;
 import ch.supsi.ist.geoshield.utils.Utility;
 import flexjson.JSONSerializer;
 import java.io.IOException;
@@ -60,7 +61,10 @@ public class ServicesManagerCtr extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
-        DataManager dm = new DataManager();
+        //DataManager dm = new DataManager();
+        
+        DataManager dm = (DataManager)request.getAttribute(
+                CacheFilter.GEOSHIELD_DATAMANAGER);
         try {
             System.out.println("ServicesManagerCtr: ");
             String req = Utility.getHttpParam("REQUEST", request);

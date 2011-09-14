@@ -32,6 +32,7 @@ import ch.supsi.ist.geoshield.data.DataManager;
 import ch.supsi.ist.geoshield.data.GroupsUsers;
 import ch.supsi.ist.geoshield.data.Users;
 import ch.supsi.ist.geoshield.exception.ServiceException;
+import ch.supsi.ist.geoshield.shields.CacheFilter;
 import ch.supsi.ist.geoshield.utils.Utility;
 import flexjson.DateTransformer;
 import flexjson.JSONSerializer;
@@ -62,7 +63,10 @@ public class UserAccountCtr extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
-        DataManager dm = new DataManager();
+        //DataManager dm = new DataManager();
+        
+        DataManager dm = (DataManager)request.getAttribute(
+                CacheFilter.GEOSHIELD_DATAMANAGER);
         try {
             String req = Utility.getHttpParam("REQUEST", request);
             if (req.equalsIgnoreCase("users")) {

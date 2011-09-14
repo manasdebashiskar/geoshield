@@ -37,6 +37,7 @@ import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -70,6 +71,9 @@ import javax.persistence.UniqueConstraint;
     @NamedQuery(
         name = "ServicesUrls.findByUrlSur",
         query = "SELECT s FROM ServicesUrls s WHERE s.urlSur = :urlSur"),
+    @NamedQuery(
+        name = "ServicesUrls.findByUrlSurIdSrv",
+        query = "SELECT s FROM ServicesUrls s WHERE s.urlSur = :urlSur and s.idSrvFk = :idSrvFk"),
     @NamedQuery(
         name = "ServicesUrls.findByIdGrp",
         query = "SELECT s FROM ServicesUrls s, ServicesPermissions p " +
@@ -105,10 +109,10 @@ public class ServicesUrls implements Serializable {
     @ManyToOne(optional = false)
     private Services idSrvFk;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "idSurFk")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "idSurFk", fetch= FetchType.EAGER)
     private List<Layers> layersCollection;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "idSurFk")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "idSurFk", fetch= FetchType.EAGER)
     private List<Offerings> offerings;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "idSurFk")

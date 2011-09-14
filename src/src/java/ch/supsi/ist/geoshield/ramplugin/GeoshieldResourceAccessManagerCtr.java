@@ -50,9 +50,7 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
             AuthorityManager am = new AuthorityManager();
             dm = Utility.getDmSession(req);
 
-            List<ServicesUrls> surs = dm.getServicesUrls();
-
-
+            //List<ServicesUrls> surs = dm.getServicesUrls();
 
             // Intercept GeoServer's question
             String question = req.getParameter("question");
@@ -77,7 +75,8 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
 
             } else if (question.equalsIgnoreCase("GETFILTER")) {
 
-
+                dm.recreate();
+                
                 String user = req.getParameter("user");
                 String password = req.getParameter("password");
                 String layer = req.getParameter("layer");
@@ -85,6 +84,8 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
                 String service = req.getParameter("service");
                 String url = req.getParameter("url");
 
+                System.out.println("getRemoteHost: " + req.getRemoteHost());
+                System.out.println("getRemoteAddr: " + req.getRemoteAddr());
                 /*System.out.println(">>> Serlet:");
                 System.out.println("user: " + user);
                 System.out.println("password: " + password);
@@ -95,7 +96,7 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
                 System.out.println("path: " + req.getServletPath());
                 System.out.println("path: " + req.getContextPath());*/
 
-                ServicesUrls sur = dm.getServicesUrlsByPathIdSrv("/map", service);
+                ServicesUrls sur = dm.getServicesUrlsByUrlIdSrv(url, service);
                 /*System.out.println("ServicesUrls: " + sur);
                 System.out.println("ServicesUrls: " + sur.getUrlSur());*/
                 //Users usr = dm.getAuthUser(user+":"+password);
@@ -104,6 +105,7 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
 
                 Requests reqs = dm.getRequestByNameReqNameSrv(request, service);
                 //System.out.println("Request: " + reqs.getNameReq());
+                
                 if (am.checkUsrAuthOnSrvSurReq(usr, sur, reqs, dm)) {
                     //System.out.println("ACCESS GRANTED");
 
@@ -115,7 +117,7 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
                             layer
                         };
 
-                        List<Layers> lays = dm.getLayers("/map", layers, "WMS");
+                        List<Layers> lays = dm.getLayersByUrlAndNameAndService(url, layers, "WMS");
 
                         //System.out.println(lays);
 
@@ -131,6 +133,8 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
                         } else if (f.toString().equalsIgnoreCase("Filter.EXCLUDE")) {
                             out.print("EXCLUDE");
                         } else if (CQL.toCQL(f).equalsIgnoreCase("mb = ma")) {
+                            out.print("EXCLUDE");
+                        } else if (CQL.toCQL(f).equalsIgnoreCase("fid=-1")) {
                             out.print("EXCLUDE");
                         } else {
                             out.print(CQL.toCQL(f));

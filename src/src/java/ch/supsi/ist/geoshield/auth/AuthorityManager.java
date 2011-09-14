@@ -140,8 +140,8 @@ public class AuthorityManager {
         
         DataManager dm = new DataManager();
 
-        //System.out.println("\nUser: " + usr.getNameUsr() + " has ");
-        //System.out.println("   > " + usr.getGroups().size() + " groups.");
+        System.out.println("\nUser: " + usr.getNameUsr() + " has ");
+        System.out.println("   > " + usr.getGroups().size() + " groups.");
 
         Date now = new Date();
         List<GroupsUsers> usrGrp = usr.getGroupsUsers();

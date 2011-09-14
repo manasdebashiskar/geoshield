@@ -1,0 +1,120 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <link rel="stylesheet" href="theme/default/style.css" type="text/css" />
+        <link rel="stylesheet" href="style.css" type="text/css" />
+        <style type="text/css">
+
+            #map {
+                clear: both;
+                position: relative;
+                width: 512px;
+                height: 449px;
+                border: 1px solid black;
+            }
+        </style>
+        <script src="OpenLayers.js"></script>
+        <script type="text/javascript">
+            var zoom = 5; 
+            var map, layer;
+
+            function init(){
+                var bounds = new OpenLayers.Bounds(
+                    143.83482400000003, -43.648056,
+                    148.47914100000003, -39.573891
+                );
+                var options = {
+                    controls: [],
+                    maxExtent: bounds,
+                    maxResolution: 0.01814186328125,
+                    projection: "EPSG:4326",
+                    units: 'degrees'
+                };
+                map = new OpenLayers.Map('map', options);
+                map.addControl(new OpenLayers.Control.PanZoomBar({
+                    position: new OpenLayers.Pixel(2, 15)
+                }));
+                map.addControl(new OpenLayers.Control.Navigation());
+                
+                /*layer = new OpenLayers.Layer.WMS( 
+                    "OpenLayers WMS",
+                    "http://vmap0.tiles.osgeo.org/wms/vmap0", 
+                    {layers: 'basic'} );
+                    
+                map.addLayer(layer);*/
+                
+                gramLayer = new OpenLayers.Layer.WMS( 
+                    "WMS GeoServer PLUG-IN",
+                    "../../../geoserver/wms", 
+                    {   
+                        layers: 'topp:tasmania_state_boundaries,topp:tasmania_water_bodies,topp:tasmania_cities,topp:tasmania_roads',
+                        transparent: "true",
+                        format: "image/png"
+                    },
+                    {
+                        isBaseLayer: true, 
+                        visible: false,
+                        singleTile: true, 
+                        ratio: 1
+                    } 
+                );
+                map.addLayer(gramLayer);
+                
+                
+                
+                geoshieldProxy = new OpenLayers.Layer.WMS( 
+                    "WMS GeoShield PROXY",
+                    "../../wms/demo", 
+                    {   
+                        layers: 'topp:tasmania_state_boundaries,topp:tasmania_water_bodies,topp:tasmania_cities,topp:tasmania_roads',
+                        transparent: "true",
+                        format: "image/png"
+                    },
+                    {
+                        isBaseLayer: true, 
+                        visible: false,
+                        singleTile: true, 
+                        ratio: 1
+                    } 
+                );
+                    
+                map.addLayer(geoshieldProxy);
+                /*
+                var wfs = new OpenLayers.Layer.Vector("WFS", {
+                    strategies: [new OpenLayers.Strategy.BBOX()],//,saveStrategy],
+                    projection: new OpenLayers.Projection("EPSG:4326"),
+                    protocol: new OpenLayers.Protocol.WFS({
+                        url: "http://localhost:8084/geoshield/wfs/demo",
+                        version: "1.1.0",
+                        srsName: "EPSG:4326",
+                        featureNS: "http://www.openplans.org/topp",
+                        featurePrefix: 'topp',
+                        featureType: "tasmania_cities",
+                        geometryName: "the_geom",
+                        schema: "http://localhost:80/geoserver/wfs/DescribeFeatureType?version=1.1.0&typename=topp:tasmania_cities"
+                    })
+                });
+                map.addLayer(wfs);
+                */
+                //map.setCenter(new OpenLayers.LonLat(lon, lat), zoom);
+                map.zoomToExtent(bounds);
+                map.addControl( new OpenLayers.Control.LayerSwitcher() );
+            }
+        </script>
+    </head>
+    <body onload="init()">
+        <h1 id="title">[Demo] GeoShield's Resource Access Manager Plug-in</h1>
+
+        <div id="tags">
+        </div>
+        <p id="shortdesc">
+            Shows the basic use of openlayers using a WMS layer
+        </p>
+
+        <div id="map" class="map"></div>
+
+    </body>
+</html>
+
+
+
+

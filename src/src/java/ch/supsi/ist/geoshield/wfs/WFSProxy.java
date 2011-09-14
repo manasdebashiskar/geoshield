@@ -100,7 +100,8 @@ public class WFSProxy extends HttpServlet {
                     (sur.getUsrSur()!=null && !sur.getUsrSur().equalsIgnoreCase(""))) {
                 String aut = "";
                 byte[] b = org.apache.commons.codec.binary.Base64.encodeBase64((sur.getUsrSur() + ":" + sur.getPswSur()).getBytes());
-                postMethod.setRequestHeader(new Header("Authorization", "Basic " + b.toString()));
+                System.out.println("Setting WFS Credential: " + sur.getUsrSur() + ":" + sur.getPswSur());
+                //postMethod.setRequestHeader(new Header("Authorization", "Basic " + b.toString()));
             }
 
             if (ServletFileUpload.isMultipartContent(request)) {

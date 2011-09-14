@@ -33,6 +33,7 @@ import ch.supsi.ist.geoshield.data.Layers;
 import ch.supsi.ist.geoshield.data.LayersPermissions;
 import ch.supsi.ist.geoshield.data.ServicesUrls;
 import ch.supsi.ist.geoshield.exception.ServiceException;
+import ch.supsi.ist.geoshield.shields.CacheFilter;
 import ch.supsi.ist.geoshield.utils.Utility;
 import flexjson.JSONSerializer;
 import java.io.IOException;
@@ -61,7 +62,9 @@ public class LayersManagerCtr extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
-        DataManager dm = new DataManager();
+        //DataManager dm = new DataManager();
+        DataManager dm = (DataManager)request.getAttribute(
+                CacheFilter.GEOSHIELD_DATAMANAGER);
         //System.out.println("***************************************************");
         //System.out.println("LayersManagerCtr:");
         try {
@@ -75,6 +78,7 @@ public class LayersManagerCtr extends HttpServlet {
             }
             if (req.equalsIgnoreCase("layers")) {
                 try {
+                    dm.recreate();
                     List<Layers> lays = dm.getLayers();
                     if (filterArr != null) {
                         for (Iterator<Layers> it = lays.iterator(); it.hasNext();) {
@@ -177,6 +181,7 @@ public class LayersManagerCtr extends HttpServlet {
                 }
             } else if (req.equalsIgnoreCase("layersPermissions")) {
                 try {
+                    dm.recreate();
                     List<LayersPermissions> lprs = dm.getLayersPermissions();
                     if (filterArr != null) {
                         for (Iterator<LayersPermissions> it = lprs.iterator(); it.hasNext();) {
@@ -241,6 +246,7 @@ public class LayersManagerCtr extends HttpServlet {
                     LayersPermissions lpr = null;
                     try {
                         try {
+                            dm.recreate();
                             lpr = dm.getLayersPermissionsByIdGrpIdLay(
                                     Integer.parseInt(idGrp), Integer.parseInt(idLay));
                             //System.out.println("LayersPermissions exist: " + lpr.getIdLpr());
