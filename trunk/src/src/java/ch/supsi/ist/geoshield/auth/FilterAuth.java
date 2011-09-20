@@ -388,23 +388,6 @@ public class FilterAuth {
             return XmlUtils.xmlToString(encoder.encodeAsDOM(filter, org.geotools.filter.v1_1.OGC.Filter));
             //return encoder.encode(filter, org.geotools.filter.v1_1.OGC.Filter, System.out);
 
-            /*
-            StringBuffer ret = new StringBuffer();
-            FilterTransformer ft = new FilterTransformer();
-            ft.setOmitXMLDeclaration(true);
-            //ft.setEncoding(??);
-            ft.setNamespaceDeclarationEnabled(true);
-            ft.setIndentation(0);
-            try {
-            ft.setIndentation(2);
-            //System.out.println(ft.transform(filter));
-            //ft.setIndentation(0);
-            ret.append(ft.transform(filter));
-            } catch (TransformerException ex) {
-            System.err.println("TransformerException: " + ex.getMessageAndLocation());
-            throw new ServiceException("Error building xml filter.");
-            }
-            return ret.toString();*/
         } catch (SAXException ex) {
             Logger.getLogger(FilterAuth.class.getName()).log(Level.SEVERE, null, ex);
             throw new ServiceException(ex.getMessage());

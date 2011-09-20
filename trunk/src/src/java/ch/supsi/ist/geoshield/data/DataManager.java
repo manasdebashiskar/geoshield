@@ -272,7 +272,7 @@ public class DataManager {
         List<Layers> lays = new LinkedList<Layers>();
         //entMan.clear();
         for (int i = 0; i < layers.length; i++) {
-            System.out.println("Looking for: " + path + " - " + layers[i]);
+            //System.out.println("Looking for: " + path + " - " + layers[i]);
             Query query = entMan.createNamedQuery("Layers.findByPathAndNameAndService");
             query.setParameter("pathSur", path);
             query.setParameter("nameLay", layers[i]);
@@ -280,7 +280,7 @@ public class DataManager {
             try {
                 Layers lay = (Layers) query.getSingleResult();
                 //entMan.refresh(lay);
-                System.out.println("  >> layer found: " + lay.getNameLay());
+                //System.out.println("  >> layer found: " + lay.getNameLay());
                 lays.add(lay);
                 //lays.add((Layers) query.getSingleResult());
             } catch (NoResultException e) {

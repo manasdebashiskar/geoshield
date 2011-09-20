@@ -28,6 +28,7 @@
 package ch.supsi.ist.geoshield.shields;
 
 import ch.supsi.ist.geoshield.data.Users;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
@@ -37,18 +38,49 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class CacheFilterUtils {
 
+    public static boolean resyncNeeded(javax.servlet.http.HttpServletRequest req) {
+        Long now = new Long(Calendar.getInstance().getTimeInMillis());
+        System.out.println("resync:");
+        System.out.println(" > " + now);
+        Long refresh = (Long) req.getAttribute(CacheFilter.GEOSHIELD_CACHE_RESYNC_TIMEOUT);
+        System.out.println(" > " + refresh);
+        Long lastRefresh = (Long) req.getAttribute(CacheFilter.GEOSHIELD_CACHE_LAST_RESYNC);
+        System.out.println(" > " + lastRefresh);
+        lastRefresh = lastRefresh + refresh;
+        System.out.println(" > " + lastRefresh);
+        if (lastRefresh.compareTo(now) > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static ch.supsi.ist.geoshield.data.DataManager getDataManagerCached(
+            javax.servlet.http.HttpServletRequest req) throws IllegalStateException {
+
+        ch.supsi.ist.geoshield.data.DataManager dm =
+                (ch.supsi.ist.geoshield.data.DataManager) req.getAttribute(CacheFilter.GEOSHIELD_DATAMANAGER);
+        if (dm == null || !dm.isOpen()) {
+            //System.out.println("recreating dm");
+            req.setAttribute(CacheFilter.GEOSHIELD_DATAMANAGER, new ch.supsi.ist.geoshield.data.DataManager());
+        } else {
+            //System.out.println("NOT recreating dm");
+        }
+        return (ch.supsi.ist.geoshield.data.DataManager) req.getAttribute(CacheFilter.GEOSHIELD_DATAMANAGER);
+    }
+
     public static Map<String, Object> getUserCache(String username, HttpServletRequest request) {
 
         // Extract cache from request
         HashMap<String, Map<String, Object>> cache =
                 (HashMap<String, Map<String, Object>>) request.getAttribute(CacheFilter.GEOSHIELD_CACHE);
-        
+
         return cache.get(username);
         /*
         Map<String, Object> ret = cache.get(username);
         if (ret == null) {
-            ret = new HashMap<String, Object>();
-            cache.put(username, ret);
+        ret = new HashMap<String, Object>();
+        cache.put(username, ret);
         }
         return ret;*/
 

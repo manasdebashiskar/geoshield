@@ -39,6 +39,7 @@ import ch.supsi.ist.geoshield.data.Users;
 import ch.supsi.ist.geoshield.exception.ServiceException;
 import ch.supsi.ist.geoshield.exception.UserException;
 import ch.supsi.ist.geoshield.parser.OGCParser;
+import ch.supsi.ist.geoshield.shields.CacheFilterUtils;
 import ch.supsi.ist.geoshield.shields.RequestWrapper;
 import ch.supsi.ist.geoshield.shields.ResponseWrapper;
 import ch.supsi.ist.geoshield.utils.Utility;
@@ -82,7 +83,7 @@ public class WMSShield implements Filter {
     private synchronized void doBeforeProcessing(RequestWrapper request, ResponseWrapper response)
             throws IOException, ServletException, ServiceException, UserException {
 
-        dm = Utility.getDmSession(request);
+        dm = CacheFilterUtils.getDataManagerCached(request);
         Throwable problem = null;
         try {
 
@@ -108,7 +109,7 @@ public class WMSShield implements Filter {
             AuthorityManager am = new AuthorityManager();
 
             ServicesUrls sur = dm.getServicesUrlsByPathIdSrv(request.getPathInfo(), "WMS");
-            usr = (Users) request.getSession().getAttribute("user");
+            usr = (Users) request.getAttribute("user");
 
             Requests reqs = dm.getRequestByNameReqNameSrv(requestParam, service);
             if (!am.checkUsrAuthOnSrvSurReq(usr, sur, reqs, dm)) {
@@ -143,9 +144,9 @@ public class WMSShield implements Filter {
                 usr = null;
 
                 if (path.equalsIgnoreCase("/public")) {
-                    usr = (Users) request.getSession().getAttribute("publicUser");
+                    usr = (Users) request.getAttribute("publicUser");
                 } else {
-                    usr = (Users) request.getSession().getAttribute("user");
+                    usr = (Users) request.getAttribute("user");
                 }
 
                 // ************************************************************

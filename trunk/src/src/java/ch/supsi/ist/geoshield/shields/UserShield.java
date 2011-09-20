@@ -25,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package ch.supsi.ist.geoshield.shields;
 
 import ch.supsi.ist.geoshield.auth.AuthorityManager;
@@ -37,6 +36,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -50,7 +51,6 @@ import javax.servlet.http.HttpSession;
 /**
  * @author Milan P. Antonovic, Massimiliano Cannata - Istituto Scienze della Terra, SUPSI
  */
-
 public class UserShield implements Filter {
 
     private static final int loginAttemp = 3;
@@ -58,6 +58,7 @@ public class UserShield implements Filter {
     // this value is null, this filter instance is not currently
     // configured. 
     private FilterConfig filterConfig = null;
+    private HashMap<String, Users> usersCache;
 
     public UserShield() {
     }
@@ -66,22 +67,13 @@ public class UserShield implements Filter {
             throws IOException, ServletException, UserException {
 
         // @todo check if channel is secured
-        // request.isSecure();
-        /*System.out.println("\n--------------------------------");
-        System.out.println("Headers summary:");
-        Enumeration h = req.getHeaderNames();
-        while (h.hasMoreElements()) {
-            String object = (String)h.nextElement();
-            System.out.println(object + " " + req.getHeader(object));
-        }
-        System.out.println("--------------------------------\n");*/
-        
+
         String path = req.getPathInfo();
-        
-        DataManager cdm = (DataManager)req.getAttribute(
-                CacheFilter.GEOSHIELD_DATAMANAGER);
-        
-        // If asked a public url it is not needed to authenticate
+
+        DataManager cdm = CacheFilterUtils.getDataManagerCached(req);
+
+        // If asked a public url, authentication is not needed
+        // @todo recode this public user access mess
         if (path.equalsIgnoreCase("/public")) {
             Users usr = null;
             try {
@@ -91,94 +83,43 @@ public class UserShield implements Filter {
                 usr = null;
             }
             if (usr == null) {
-                /*DataManager dm = new DataManager();
-                usr = dm.getUser("public");
-                req.getSession().setAttribute("publicUser", usr);
-                dm.close();*/
                 usr = cdm.getUser("public");
                 req.setAttribute("publicUser", usr);
                 req.getSession().setAttribute("publicUser", usr);
             }
         } else {
-
+            // Reading the authorization header to get user and password
+            String authHeader = req.getHeader("Authorization");
             Users usr = null;
 
-            // Refresh user on request after one minute
-            try {
-                Long milli = null;
-                milli = (Long) req.getSession().getAttribute("refreshUser");
-                if (milli == null) {
-                    req.getSession().setAttribute("refreshUser", new Long(Utility.getMillis()));
+            if (authHeader != null) {
+                if (CacheFilterUtils.resyncNeeded(req)) {
+                    
+                    AuthorityManager am = new AuthorityManager();
+                    usr = am.WWWAuthenticate(req);
+                    usersCache.put(authHeader, usr);
                 } else {
-                    if ((new Long(Utility.getMillis()) - milli) < 60000) {
-                        usr = (Users) req.getSession().getAttribute("user");
-                    }else{
-                        req.getSession().setAttribute("refreshUser", new Long(Utility.getMillis()));
+                    // Check if user exist interface filter cache
+                    if (usersCache.containsKey(authHeader)) {
+                        usr = usersCache.get(authHeader);
+                    } else {
+                        AuthorityManager am = new AuthorityManager();
+                        usr = am.WWWAuthenticate(req);
+                        usersCache.put(authHeader, usr);
                     }
                 }
-            } catch (IllegalStateException e) {
-                System.err.println(e.toString());
             }
 
             if (usr == null) {
-                HttpSession session = null;
-
-                if (req.getSession().isNew()) {
-                    session = req.getSession(true);
+                throw new UserException(
+                        "Sorry! invalid user-name or password.",
+                        UserException.LOGIN_ATTEMPT_FAILED);
+            } else {
+                if (!usr.getIsActiveUsr().booleanValue()) {
+                    res.sendRedirect("/istShield/error/userExpired.jsp");
                 } else {
-                    session = req.getSession();
-                }
-
-                /*try {
-                    if (req.getSession().getAttribute("datamanager") == null) {
-                        req.getSession().setAttribute("datamanager", new DataManager());
-                    }else{
-                        DataManager dm = (DataManager)req.getSession().getAttribute("datamanager");
-                        if(!dm.isOpen()){
-                            dm.recreate();
-                            System.out.println("Recreation of new entity manager..");
-                        }
-                    }
-                } catch (IllegalStateException e) {
-                    System.err.println(e.toString());
-                }*/
-
-                //String auth = req.getHeader("Authorization");
-                AuthorityManager am = new AuthorityManager();
-                usr = am.WWWAuthenticate(req);
-
-                if (usr == null) {
-                    System.out.println("User is NULL");
-                    if (session.getAttribute("login") == null) {
-                        session.setAttribute("login", new Integer(1));
-                    }
-                    if (((Integer) session.getAttribute("login")) < UserShield.loginAttemp) {
-                        session.setAttribute("login",
-                                ((Integer) session.getAttribute("login")) + 1);
-                        throw new UserException(
-                                "Sorry! invalid user-name or password.",
-                                UserException.LOGIN_ATTEMPT_FAILED);
-                    } else {
-                        session.setAttribute("login", new Integer(1));
-                        throw new UserException(
-                                "Sorry! invalid user-name or password.",
-                                UserException.INVALID_USER_OR_PASSWORD);
-                    }
-                } else {
-                    System.out.println("User is " + usr.getNameUsr());
-                    session.setAttribute("user", usr);
-                    
-                    // @todo check Issue: http://code.google.com/p/geoshield/issues/detail?id=2
                     req.setAttribute("user", usr);
-                    
-                    session.setAttribute("login", new Integer(1));
                 }
-            }
-            // User exist but is no more active
-            if (!usr.getIsActiveUsr().booleanValue()) {
-                req.getSession().invalidate();
-                res.sendRedirect("/istShield/error/userExpired.jsp");
-                return;
             }
         }
     }
@@ -236,6 +177,7 @@ public class UserShield implements Filter {
      */
     @Override
     public void destroy() {
+        this.usersCache = null;
     }
 
     /**
@@ -244,6 +186,7 @@ public class UserShield implements Filter {
     @Override
     public void init(FilterConfig filterConfig) {
         this.filterConfig = filterConfig;
+        this.usersCache = new HashMap<String, Users>();
     }
 
     /**
@@ -308,5 +251,4 @@ public class UserShield implements Filter {
     public void log(String msg) {
         filterConfig.getServletContext().log(msg);
     }
-
 }

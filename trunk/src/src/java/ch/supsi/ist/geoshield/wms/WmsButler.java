@@ -32,6 +32,7 @@ import ch.supsi.ist.geoshield.parser.OGCParser;
 import ch.supsi.ist.geoshield.data.DataManager;
 import ch.supsi.ist.geoshield.data.ServicesUrls;
 import ch.supsi.ist.geoshield.exception.ServiceException;
+import ch.supsi.ist.geoshield.shields.CacheFilterUtils;
 import ch.supsi.ist.geoshield.shields.RequestWrapper;
 import ch.supsi.ist.geoshield.shields.ResponseWrapper;
 import ch.supsi.ist.geoshield.utils.Utility;
@@ -66,10 +67,9 @@ public class WmsButler implements Filter {
     private void doBeforeProcessing(RequestWrapper request, ResponseWrapper response)
             throws IOException, ServletException, ServiceException {
 
-        dm = Utility.getDmSession(request);
+        dm = CacheFilterUtils.getDataManagerCached(request);
         if (request.getMethod().equalsIgnoreCase("GET")) {
             this.handleGetRequest(request, response);
-            //throw new ServiceException("GET method is not supported");
         } else if (request.getMethod().equalsIgnoreCase("POST")) {
             this.handlePostRequest(request, response);
         }
@@ -78,16 +78,14 @@ public class WmsButler implements Filter {
     private void handleGetRequest(RequestWrapper request, ResponseWrapper response) throws IOException, ServiceException {
         parser = new WMSParser();
         Object o = parser.parseGet(request);
-        //System.out.println("Object: " + o.getClass().getName());
-        request.getSession().setAttribute(OGCParser.OBJREQ, o);
+        request.setAttribute(OGCParser.OBJREQ, o);
     }
 
     private void handlePostRequest(RequestWrapper request, ResponseWrapper response) throws IOException, ServiceException {
 
         parser = new WMSParser();
         Object o = parser.parsePost(request);
-        //System.out.println("Object: " + o.getClass().getName());
-        request.getSession().setAttribute(OGCParser.OBJREQ, o);
+        request.setAttribute(OGCParser.OBJREQ, o);
 
     }
 
@@ -96,7 +94,7 @@ public class WmsButler implements Filter {
 
         if (Utility.getHttpParam("REQUEST", request).equalsIgnoreCase("GETCAPABILITIES")) {
             byte[] byts = null;
-            byts = (byte[]) request.getSession().getAttribute(OGCParser.BYTRES);
+            byts = (byte[]) request.getAttribute(OGCParser.BYTRES);
             BufferedOutputStream out = new BufferedOutputStream(response.getOutputStream());
             out.write(byts);
             out.flush();
