@@ -31,6 +31,7 @@ import ch.supsi.ist.geoshield.data.DataManager;
 import ch.supsi.ist.geoshield.data.ServicesUrls;
 import ch.supsi.ist.geoshield.utils.ProxyUtility;
 import ch.supsi.ist.geoshield.parser.OGCParser;
+import ch.supsi.ist.geoshield.shields.CacheFilterUtils;
 import ch.supsi.ist.geoshield.utils.Utility;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -74,7 +75,7 @@ public class WMSProxy extends HttpServlet {
             throws ServletException, IOException {
 
 
-        dm = Utility.getDmSession(request);
+        dm = CacheFilterUtils.getDataManagerCached(request);
         ServicesUrls sur;
         try {
 
