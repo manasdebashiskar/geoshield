@@ -46,6 +46,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import org.eclipse.persistence.annotations.Cache;
 
 /**
  *

@@ -84,12 +84,14 @@ public class WMSProxy extends HttpServlet {
             stringProxyHost = sur.getUrlSur();
 
             PostMethod postMethod = new PostMethod(stringProxyHost);
+            System.out.println("Server: " + stringProxyHost);
                         
             //ProxyUtility.setProxyRequestHeaders(request, postMethod, stringProxyHost);
 
             // Check if BASIC authentication is needed
             if ((sur.getPswSur() != null && !sur.getPswSur().equalsIgnoreCase(""))
                     || (sur.getUsrSur() != null && !sur.getUsrSur().equalsIgnoreCase(""))) {
+                System.out.println("Setting Authorization..");
                 postMethod.setRequestHeader(new Header("Authorization", "Basic " + new String(
                         Base64.encodeBase64((sur.getUsrSur() + ":" + sur.getPswSur()).getBytes()))));
             }
@@ -105,7 +107,7 @@ public class WMSProxy extends HttpServlet {
                     String paramName = (String) paramNames.nextElement();
                     String[] paramValues = request.getParameterValues(paramName);
                     for (int i = 0; i < paramValues.length; i++) {
-                        //System.out.println("paramName: " + paramName + " = " + paramValues[i]);
+                        System.out.println("paramName: " + paramName + " = " + paramValues[i]);
                         nvp.add(new NameValuePair(paramName, paramValues[i]));
                     }
                 }
@@ -174,7 +176,7 @@ public class WMSProxy extends HttpServlet {
                     byte[] by = outStream.toByteArray();
 
                     // Saving byte response into session memory (think something better..)
-                    request.getSession().setAttribute(OGCParser.BYTRES, by);
+                    request.setAttribute(OGCParser.BYTRES, by);
 
                 } else {
                     InputStream inputStreamProxyResponse = postMethod.getResponseBodyAsStream();

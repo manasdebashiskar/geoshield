@@ -32,6 +32,9 @@ import ch.supsi.ist.geoshield.data.Groups;
 import ch.supsi.ist.geoshield.data.Layers;
 import ch.supsi.ist.geoshield.data.LayersPermissions;
 import ch.supsi.ist.geoshield.data.Offerings;
+import ch.supsi.ist.geoshield.data.Requests;
+import ch.supsi.ist.geoshield.data.ServicesPermissions;
+import ch.supsi.ist.geoshield.data.ServicesUrls;
 import ch.supsi.ist.geoshield.data.Users;
 import ch.supsi.ist.geoshield.exception.ServiceException;
 import ch.supsi.ist.geoshield.sos.SOSUtils;
@@ -52,6 +55,26 @@ public class TestDataManager {
     public static void main(String[] args) {
         // TODO code application logic here
         DataManager dm = new DataManager();
+        List<Users> result = dm.getUsersBySurSrv("http://geoservice.ist.supsi.ch/geoserver/wms");
+        System.out.println(result.size());
+        for (Users o : result) {
+            System.out.println(o.getNameUsr());
+        }
+       /*List<Requests> result = dm.getServicePermissionBySurUsrTest(
+                "http://geoservice.ist.supsi.ch/geoserver/wms", 
+                "ist", "WMS");
+        for (Requests o : result) {
+            System.out.println(o.getNameReq());
+        }*/
+        
+        /*
+        List<ServicesPermissions> l = dm.getServicePermissionBySurUsr(8, 8);
+        for (Iterator<ServicesPermissions> it = l.iterator(); it.hasNext();) {
+            ServicesPermissions servicesPermissions = it.next();
+            System.out.println(" > " + servicesPermissions.getIdSpr().toString());
+        }*/
+        
+        /*
         Users usr = dm.getUser(1);
         System.out.println("User: " + usr.getNameUsr());
         List<Groups> grps = usr.getGroups();
@@ -80,7 +103,7 @@ public class TestDataManager {
             Logger.getLogger(TestDataManager.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-
+        */
         dm.close();
     }
 }

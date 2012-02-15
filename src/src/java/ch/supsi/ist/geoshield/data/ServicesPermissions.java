@@ -62,7 +62,14 @@ import javax.persistence.UniqueConstraint;
         name = "ServicesPermissions.findBySurGrp",
         query = "SELECT s FROM ServicesPermissions s " +
                 "WHERE s.idGrpFk = :idGrpFk " +
-                "AND s.idSurFk = :idSurFk ")
+                "AND s.idSurFk = :idSurFk "),
+    @NamedQuery(
+        name = "ServicesPermissions.findBySurUsr",
+        query = "SELECT s FROM ServicesPermissions s, Groups g, GroupsUsers h " +
+                "WHERE s.idSurFk = :idSurFk " +
+                "AND s.idGrpFk = g.idGrp " +
+                "AND g.idGrp = h.idGrpFk " +
+                "AND h.idUsrFk = :idUsr ")
 })
 public class ServicesPermissions implements Serializable {
     private static final long serialVersionUID = 1L;

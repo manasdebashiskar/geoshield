@@ -14,11 +14,12 @@ import ch.supsi.ist.geoshield.exception.ServiceException;
 import ch.supsi.ist.geoshield.exception.UserException;
 import ch.supsi.ist.geoshield.utils.Utility;
 import ch.supsi.ist.geoshield.auth.FilterAuth;
+import flexjson.JSON;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.annotation.Annotation;
+import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.persistence.NoResultException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -26,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.opengis.filter.Filter;
 import org.geotools.filter.text.cql2.CQL;
+import org.json.JSONObject;
 
 /**
  * @author Milan Antonovic - Istituto Scienze della Terra, SUPSI
@@ -49,19 +51,23 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
 
             AuthorityManager am = new AuthorityManager();
             dm = Utility.getDmSession(req);
-
+            
             //List<ServicesUrls> surs = dm.getServicesUrls();
-
+            
             // Intercept GeoServer's question
             String question = req.getParameter("question");
+            
+            System.out.println("GRAM QUESTION: " + question);
 
             if (question == null) {
                 out.print("question unknown");
 
             } else if (question.equalsIgnoreCase("USEREXIST")) {
-
+                
+                dm.recreate();
                 String user = req.getParameter("user");
                 String password = req.getParameter("password");
+                
                 try {
                     Users usr = dm.getAuthUser(user + ":" + password);
                     if (!usr.getIsActiveUsr().booleanValue()) {
@@ -73,10 +79,13 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
                     out.print("false");
                 }
 
-            } else if (question.equalsIgnoreCase("GETFILTER")) {
+            } else if (question.equalsIgnoreCase("SYNCHRONIZE")) {
+                String url = req.getParameter("url");
+                out.print(GramUtils.getSyncJson(url));
+            } else if (question.equalsIgnoreCase("GETFILTERS")) {
 
-                dm.recreate();
-                
+                JSONObject json = new JSONObject();
+
                 String user = req.getParameter("user");
                 String password = req.getParameter("password");
                 String layer = req.getParameter("layer");
@@ -84,30 +93,116 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
                 String service = req.getParameter("service");
                 String url = req.getParameter("url");
 
-                System.out.println("getRemoteHost: " + req.getRemoteHost());
-                System.out.println("getRemoteAddr: " + req.getRemoteAddr());
-                /*System.out.println(">>> Serlet:");
+                System.out.println(">>> GETFILTERS:");
                 System.out.println("user: " + user);
                 System.out.println("password: " + password);
                 System.out.println("layer: " + layer);
                 System.out.println("request: " + request);
                 System.out.println("service: " + service);
                 System.out.println("url: " + url);
-                System.out.println("path: " + req.getServletPath());
-                System.out.println("path: " + req.getContextPath());*/
+
+                try {
+                    Users usr = dm.getAuthUser(user + ":" + password);
+                    if (!usr.getIsActiveUsr().booleanValue()) {
+                        json.put("user", "inactive");
+                    } else {
+                        json.put("user", "true");
+                        try {
+                            ServicesUrls sur = dm.getServicesUrlsByUrlIdSrv(url, service);
+                            Requests reqs = dm.getRequestByNameReqNameSrv(request, service);
+
+                            if (am.checkUsrAuthOnSrvSurReq(usr, sur, reqs, dm)) {
+                                json.put("service", "granted");
+
+                                System.out.println("ACCESS GRANTED");
+
+                                if (request.equalsIgnoreCase("GETCAPABILITIES")) {
+                                    json.put("request", "granted");
+                                } else {
+
+                                    json.put("request", "granted");
+
+                                    String[] layers = layer.split(",");
+
+                                    List<Layers> lays = dm.getLayersByUrlAndNameAndService(url, layers, "WMS");
+
+                                    FilterAuth fau = new FilterAuth();
+
+
+                                    JSONObject filters = new JSONObject();
+                                    for (Iterator<Layers> it = lays.iterator(); it.hasNext();) {
+                                        Layers l = it.next();
+                                        Filter f = fau.getFilter(usr, l, dm);
+
+                                        System.out.println("Filter: " + f.toString());
+                                        System.out.println("CQL: " + CQL.toCQL(f));
+
+                                        String filter = "";
+
+                                        if (f.toString().equalsIgnoreCase("Filter.INCLUDE")) {
+                                            filter = "INCLUDE";
+                                        } else if (f.toString().equalsIgnoreCase("Filter.EXCLUDE")) {
+                                            filter = "EXCLUDE";
+                                        } else if (CQL.toCQL(f).equalsIgnoreCase("mb = ma")) {
+                                            filter = "EXCLUDE";
+                                        } else if (CQL.toCQL(f).equalsIgnoreCase("fid=-1")) {
+                                            filter = "EXCLUDE";
+                                        } else {
+                                            filter = CQL.toCQL(f);
+                                        }
+                                        filters.put(l.getNameLay(), filter);
+
+                                    }
+                                    json.put("filters", filters);
+                                }
+                            } else {
+                                json.put("request", "denied");
+                            }
+                        } catch (ServiceException ex) {
+                            json.put("service", "denied");
+                        }
+                    }
+                } catch (NoResultException e) {
+                    json.put("user", "false");
+                }
+
+                System.out.println(json.toString(4));
+                out.print(json.toString(4));
+
+            } else if (question.equalsIgnoreCase("GETFILTER")) {
+
+                //dm.recreate();
+
+                String user = req.getParameter("user");
+                String password = req.getParameter("password");
+                String layer = req.getParameter("layer");
+                String request = req.getParameter("request");
+                String service = req.getParameter("service");
+                String url = req.getParameter("url");
+
+                System.out.println(">>> Serlet:");
+                System.out.println("user: " + user);
+                System.out.println("password: " + password);
+                System.out.println("layer: " + layer);
+                System.out.println("request: " + request);
+                System.out.println("service: " + service);
+                System.out.println("url: " + url);
+                System.out.println("ServletPath: " + req.getServletPath());
+                System.out.println("ContextPath: " + req.getContextPath());
+
 
                 ServicesUrls sur = dm.getServicesUrlsByUrlIdSrv(url, service);
-                /*System.out.println("ServicesUrls: " + sur);
-                System.out.println("ServicesUrls: " + sur.getUrlSur());*/
-                //Users usr = dm.getAuthUser(user+":"+password);
+
+                System.out.println("user: " + user);
+                System.out.println("password: " + password);
+
                 Users usr = dm.getAuthUser(user + ":" + password);
-                //System.out.println("USER: " + usr.getFirstNameUsr() + " " + usr.getLastNameUsr());
 
                 Requests reqs = dm.getRequestByNameReqNameSrv(request, service);
-                //System.out.println("Request: " + reqs.getNameReq());
-                
+                System.out.println("Request: " + reqs.getNameReq());
+
                 if (am.checkUsrAuthOnSrvSurReq(usr, sur, reqs, dm)) {
-                    //System.out.println("ACCESS GRANTED");
+                    System.out.println("ACCESS GRANTED");
 
                     if (request.equalsIgnoreCase("GETCAPABILITIES")) {
                         out.print("INCLUDE");
@@ -141,7 +236,7 @@ public class GeoshieldResourceAccessManagerCtr extends HttpServlet {
                         }
                     }
                 } else {
-                    //System.out.println("ACCESS DENIED");
+                    System.out.println("ACCESS DENIED");
                     out.print("EXCLUDE");
                 }
 

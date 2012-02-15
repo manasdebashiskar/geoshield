@@ -27,7 +27,6 @@
  */
 package ch.supsi.ist.geoshield.shields;
 
-import ch.supsi.ist.geoshield.data.Users;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,16 +38,19 @@ import javax.servlet.http.HttpServletRequest;
 public class CacheFilterUtils {
 
     public static boolean resyncNeeded(javax.servlet.http.HttpServletRequest req) {
+        //System.out.println("\n\n\\/\\/\\/\\/\\/\\/");
         Long now = new Long(Calendar.getInstance().getTimeInMillis());
-        System.out.println("resync:");
-        System.out.println(" > " + now);
         Long refresh = (Long) req.getAttribute(CacheFilter.GEOSHIELD_CACHE_RESYNC_TIMEOUT);
-        System.out.println(" > " + refresh);
+        //System.out.println(" > " + refresh);
         Long lastRefresh = (Long) req.getAttribute(CacheFilter.GEOSHIELD_CACHE_LAST_RESYNC);
-        System.out.println(" > " + lastRefresh);
+        //System.out.println(" > " + lastRefresh);
         lastRefresh = lastRefresh + refresh;
-        System.out.println(" > " + lastRefresh);
-        if (lastRefresh.compareTo(now) > 0) {
+        //System.out.println(" > nex: " + lastRefresh);
+        //System.out.println(" > now: " + now);
+        //System.out.println(" > com1: " + lastRefresh.compareTo(now));
+        //System.out.println(" > com2: " + (lastRefresh-now));
+        if (lastRefresh.compareTo(now) < 0) {
+            //System.out.println("resync!");
             return true;
         } else {
             return false;
@@ -57,15 +59,15 @@ public class CacheFilterUtils {
 
     public static ch.supsi.ist.geoshield.data.DataManager getDataManagerCached(
             javax.servlet.http.HttpServletRequest req) throws IllegalStateException {
-
         ch.supsi.ist.geoshield.data.DataManager dm =
                 (ch.supsi.ist.geoshield.data.DataManager) req.getAttribute(CacheFilter.GEOSHIELD_DATAMANAGER);
-        if (dm == null || !dm.isOpen()) {
-            //System.out.println("recreating dm");
+        if (dm == null) {
             req.setAttribute(CacheFilter.GEOSHIELD_DATAMANAGER, new ch.supsi.ist.geoshield.data.DataManager());
-        } else {
-            //System.out.println("NOT recreating dm");
-        }
+        } else if (!dm.isOpen()) {
+            dm.recreate();
+        }/* else if(CacheFilterUtils.resyncNeeded(req)){
+            dm.recreate();
+        }*/
         return (ch.supsi.ist.geoshield.data.DataManager) req.getAttribute(CacheFilter.GEOSHIELD_DATAMANAGER);
     }
 

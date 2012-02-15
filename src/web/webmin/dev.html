@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>extDesigner</title>
+        <link rel="stylesheet" type="text/css" href="ext/resources/css/ext-all.css"/>
+        <link rel="stylesheet" type="text/css" href="css/main.css"/>
+        <link href='http://fonts.googleapis.com/css?family=Patrick+Hand' rel='stylesheet' type='text/css'>
+        <link href='http://fonts.googleapis.com/css?family=Nova+Square' rel='stylesheet' type='text/css'>
+        <script type="text/javascript" src="ext/ext-all-debug.js"></script>
+        
+        <!-- DEVELOPERS INCLUDE -->
+        <script type="text/javascript" src="app/view/ui/MainPanel.js"></script>
+        <script type="text/javascript" src="app/view/MainPanel.js"></script>
+        
+        <script type="text/javascript" src="app/view/ui/BasePage.js"></script>
+        <script type="text/javascript" src="app/view/BasePage.js"></script>
+        <script type="text/javascript" src="app/view/ServiceStatus.js"></script>
+        
+        <script type="text/javascript">
+        
+            Ext.Loader.setConfig({
+                enabled: false
+            });
+
+            Ext.application({
+                name: 'istsos',
+
+                launch: function() {
+                    Ext.QuickTips.init();
+
+                    var cmp1 = Ext.create('istsos.view.MainPanel', {
+                        renderTo: Ext.getBody()
+                    });
+                    cmp1.show();
+                }
+            });
+        
+        </script>
+    </head>
+    <body></body>
+</html>

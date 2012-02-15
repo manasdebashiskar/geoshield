@@ -35,6 +35,8 @@ import java.io.StringWriter;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -53,11 +55,15 @@ public class CacheFilter implements Filter {
     public static final String GEOSHIELD_CACHE_RESYNC_TIMEOUT = "CACHE_RESYNC";
     public static final String GEOSHIELD_CACHE_LAST_RESYNC = "LAST_CACHE_RESYNC";
     public static final String GEOSHIELD_DATAMANAGER = "GEOSHIELD_DATAMANAGER";
+    
+    public static final String GEOSHIELD_REALM = "GEOSHIELD_REALM";
+    
     private static final boolean debug = true;
     private Long resyncTimeOut;
     private Long lastResyncTime;
     private FilterConfig filterConfig = null;
     private boolean resynNeeded = false;
+    private String realm = "GeoShield";
     /*
      * geoshieldCache structure:
      * {
@@ -74,24 +80,25 @@ public class CacheFilter implements Filter {
 
     private void doBeforeProcessing(RequestWrapper request, ServletResponse response)
             throws IOException, ServletException {
-        System.out.println("Loading cache to request..");
         request.setAttribute(GEOSHIELD_CACHE, this.geoshieldCache);
         request.setAttribute(GEOSHIELD_CACHE_RESYNC_TIMEOUT, this.resyncTimeOut);
         request.setAttribute(GEOSHIELD_CACHE_LAST_RESYNC, this.lastResyncTime);
-        if (CacheFilterUtils.resyncNeeded(request)) {
-            this.dm.recreate();
-            System.out.println(" > Recreating DataManager");
-            resynNeeded = true;
+        request.setAttribute(GEOSHIELD_REALM, this.realm);
+        synchronized (this) {
+            if (CacheFilterUtils.resyncNeeded(request) && !resynNeeded) {
+                this.dm.recreate();
+                System.out.println(" > Recreating DataManager");
+                resynNeeded = true;
+            }
+            request.setAttribute(GEOSHIELD_DATAMANAGER, this.dm);
         }
-        request.setAttribute(GEOSHIELD_DATAMANAGER, this.dm);
-
     }
 
     private void doAfterProcessing(ServletRequest request, ServletResponse response)
             throws IOException, ServletException {
-        if (debug) {
-            log("CacheFilter:DoAfterProcessing");
-        }
+        /*Logger.getLogger(CacheFilter.class.getName()).log(
+        Level.INFO,
+        "DoAfterProcessing");*/
         if (resynNeeded) {
             resynNeeded = false;
             this.lastResyncTime = new Long(Calendar.getInstance().getTimeInMillis());
@@ -138,20 +145,27 @@ public class CacheFilter implements Filter {
     @Override
     public void destroy() {
         if (this.dm != null) {
-            this.dm.close();
+            this.dm.closeIt();
         }
         this.geoshieldCache = null;
-        this.dm.close();
+        this.dm = null;
     }
 
     @Override
     public void init(FilterConfig filterConfig) {
         this.filterConfig = filterConfig;
         if (filterConfig != null) {
-            if (debug) {
-                log("CacheFilter:Initializing filter");
-            }
+
+            Logger.getLogger(CacheFilter.class.getName()).log(
+                    Level.INFO,
+                    "CacheFilter: initializing cacheFilter");
+
             this.resyncTimeOut = Long.decode(this.filterConfig.getInitParameter(GEOSHIELD_CACHE_RESYNC_TIMEOUT));
+            
+            //GEOSHIELD_REALM
+            
+            realm = filterConfig.getServletContext().getInitParameter(GEOSHIELD_REALM);
+            
         }
         this.geoshieldCache = new HashMap<String, Map<String, Object>>();
         this.lastResyncTime = new Long(Calendar.getInstance().getTimeInMillis());

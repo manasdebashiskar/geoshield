@@ -44,7 +44,7 @@
                 
                 gramLayer = new OpenLayers.Layer.WMS( 
                     "WMS GeoServer PLUG-IN",
-                    "../../../geoserver/wms", 
+                    "http://localhost:8084/geoserver/wms", 
                     {   
                         layers: 'topp:tasmania_state_boundaries,topp:tasmania_water_bodies,topp:tasmania_cities,topp:tasmania_roads',
                         transparent: "true",
@@ -58,12 +58,10 @@
                     } 
                 );
                 map.addLayer(gramLayer);
-                
-                
-                
+                    
                 geoshieldProxy = new OpenLayers.Layer.WMS( 
                     "WMS GeoShield PROXY",
-                    "../../wms/demo", 
+                    "http://localhost:8084/geoshield/wms/demo", 
                     {   
                         layers: 'topp:tasmania_state_boundaries,topp:tasmania_water_bodies,topp:tasmania_cities,topp:tasmania_roads',
                         transparent: "true",
@@ -78,23 +76,7 @@
                 );
                     
                 map.addLayer(geoshieldProxy);
-                /*
-                var wfs = new OpenLayers.Layer.Vector("WFS", {
-                    strategies: [new OpenLayers.Strategy.BBOX()],//,saveStrategy],
-                    projection: new OpenLayers.Projection("EPSG:4326"),
-                    protocol: new OpenLayers.Protocol.WFS({
-                        url: "http://localhost:8084/geoshield/wfs/demo",
-                        version: "1.1.0",
-                        srsName: "EPSG:4326",
-                        featureNS: "http://www.openplans.org/topp",
-                        featurePrefix: 'topp',
-                        featureType: "tasmania_cities",
-                        geometryName: "the_geom",
-                        schema: "http://localhost:80/geoserver/wfs/DescribeFeatureType?version=1.1.0&typename=topp:tasmania_cities"
-                    })
-                });
-                map.addLayer(wfs);
-                */
+
                 //map.setCenter(new OpenLayers.LonLat(lon, lat), zoom);
                 map.zoomToExtent(bounds);
                 map.addControl( new OpenLayers.Control.LayerSwitcher() );

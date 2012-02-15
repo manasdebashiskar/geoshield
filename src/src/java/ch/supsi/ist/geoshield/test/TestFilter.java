@@ -91,6 +91,7 @@ public class TestFilter {
             Filter filter = CQL.toFilter(ret);
 
             System.out.println(">" + filter.toString() + "<");
+            System.out.println(">" + CQL.toCQL(filter) + "<");
             System.out.println("*************************");
 
             SQLEncoderPostgis encoder = new SQLEncoderPostgis();

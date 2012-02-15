@@ -5,17 +5,34 @@
     <exclude-unlisted-classes>false</exclude-unlisted-classes>
     <shared-cache-mode>NONE</shared-cache-mode>
     <properties>
+      <!--  
+      <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://10.0.7.53:5432/geoshield"/>
+      -->
       <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/geoshield"/>
-      <property name="javax.persistence.jdbc.user" value="postgres"/>
-      <property name="javax.persistence.jdbc.password" value="postgres"/>
+      <property name="javax.persistence.jdbc.user" value="geoshield"/>
+      <property name="javax.persistence.jdbc.password" value="SHh8riftaCT"/>
       <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
-      <property name="eclipselink.jdbc.read-connections.max" value="78"/>
       <property name="eclipselink.target-database" value="PostgreSQL"/>
+      
+      <!-- The maximum number of connections allowed in the JDBC read connection pool -->
+      <property name="eclipselink.jdbc.read-connections.max" value="5"/>
+      <!-- The minimum number of connections allowed in the JDBC read connection pool -->
+      <property name="eclipselink.jdbc.read-connections.min" value="1"/>
+      <!-- Specify whether or not to allow concurrent use of shared read connections -->
       <property name="eclipselink.jdbc.read-connections.shared" value="true"/>
-      <property name="eclipselink.jdbc.write-connections.max" value="50"/>
-      <property name="eclipselink.jdbc.write-connections.min" value="20"/>
+      <!-- The maximum number of connections allowed in the JDBC write connection pool -->
+      <property name="eclipselink.jdbc.write-connections.max" value="5"/>
+      <!-- The maximum number of connections allowed in the JDBC write connection pool -->
+      <property name="eclipselink.jdbc.write-connections.min" value="1"/>
+      
+      <!-- Control the amount and detail of log output by configuring the log level.
+        OFF – SEVERE – WARNING – INFO – CONFIG – FINE – FINER – FINEST – ALL  -->
       <property name="eclipselink.logging.level" value="OFF"/>
-      <property name="eclipselink.cache.type.default" value="NONE"/>
+      <!-- Control whether the timestamp is logged in each log entry.  -->
+      <property name="eclipselink.logging.timestamp" value="true"/>
+      <!-- FULL - WEAK - SOFT - SOFT_WEAK - HARD_WEAK - CACHE - NONE -->
+      <property name="eclipselink.cache.type.default" value="WEAK"/>
+      <!--  -->
       <property name="eclipselink.cache.shared" value="true"/>
     </properties>
   </persistence-unit>

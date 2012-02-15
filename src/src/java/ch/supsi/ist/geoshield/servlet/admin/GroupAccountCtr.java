@@ -25,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package ch.supsi.ist.geoshield.servlet.admin;
 
 import ch.supsi.ist.geoshield.data.DataManager;
@@ -34,6 +33,7 @@ import ch.supsi.ist.geoshield.data.GroupsUsers;
 import ch.supsi.ist.geoshield.data.Users;
 import ch.supsi.ist.geoshield.exception.ServiceException;
 import ch.supsi.ist.geoshield.shields.CacheFilter;
+import ch.supsi.ist.geoshield.shields.CacheFilterUtils;
 import ch.supsi.ist.geoshield.utils.Utility;
 import flexjson.JSONSerializer;
 import java.io.IOException;
@@ -56,10 +56,10 @@ public class GroupAccountCtr extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
+        DataManager dm = new DataManager();
         try {
-            
-        DataManager dm = (DataManager)request.getAttribute(
-                CacheFilter.GEOSHIELD_DATAMANAGER);
+
+
             String req = Utility.getHttpParam("REQUEST", request);
             //System.out.println("GroupAccountCtr: " + req);
             if (req.equalsIgnoreCase("groups")) {
@@ -71,8 +71,6 @@ public class GroupAccountCtr extends HttpServlet {
                     out.println(json.exclude("*.class", "groups").serialize("groups", grps));
                 } catch (Exception e) {
                     out.println(e.toString());
-                } finally {
-                    dm.close();
                 }
             } else if (req.equalsIgnoreCase("setUserGroup")) {
                 String idGrp = Utility.getHttpParam("idGrp", request);
@@ -104,7 +102,7 @@ public class GroupAccountCtr extends HttpServlet {
                         //System.out.println("Membership exist: " + gus.getIdGus());
                         if (!Boolean.parseBoolean(isMember)) {
                             dm.remove(gus);
-                            out.print("{success: true, message: 'Member \""+usr.getNameUsr()+"\" removed.'}");
+                            out.print("{success: true, message: 'Member \"" + usr.getNameUsr() + "\" removed.'}");
                         } else {
                             out.print("{success: false, error: 'Database mismatch, please reload data!'}");
                         }
@@ -115,7 +113,7 @@ public class GroupAccountCtr extends HttpServlet {
                             gus.setIdGrpFk(grp);
                             gus.setIdUsrFk(usr);
                             dm.persist(gus);
-                            out.print("{success: true, message: 'Member \""+usr.getNameUsr()+"\" added.'}");
+                            out.print("{success: true, message: 'Member \"" + usr.getNameUsr() + "\" added.'}");
                         } else {
                             out.print("{success: false, error: 'Database mismatch, please reload data!'}");
                         }
@@ -123,8 +121,8 @@ public class GroupAccountCtr extends HttpServlet {
                 } catch (ServiceException ex) {
                     out.print("{success: false, error: 'Database error!'}");
                 } catch (NoResultException noResultException) {
-                    out.print("{success: false, " +
-                            "error: 'Group or user with given Id are not found'}");
+                    out.print("{success: false, "
+                            + "error: 'Group or user with given Id are not found'}");
                 } catch (Exception ex) {
                     //System.out.println(ex.getMessage());
                     out.print("{success: false, error: 'Database error!'}");
@@ -134,8 +132,8 @@ public class GroupAccountCtr extends HttpServlet {
                 Groups usr = null;
                 try {
                     usr = dm.getGroup(nameGrp);
-                    out.print("{success: false, " +
-                            "error: 'Group with name \"" + nameGrp + "\" already exist.'}");
+                    out.print("{success: false, "
+                            + "error: 'Group with name \"" + nameGrp + "\" already exist.'}");
                 } catch (NoResultException noResultException) {
                     usr = new Groups();
                     usr.setNameGrp(nameGrp);
@@ -154,13 +152,13 @@ public class GroupAccountCtr extends HttpServlet {
                     String grpName = grp.getNameGrp();
                     try {
                         dm.remove(grp);
-                        out.print("{success: true, message: 'Group "+grpName+" removed successfully'}");
+                        out.print("{success: true, message: 'Group " + grpName + " removed successfully'}");
                     } catch (ServiceException serviceException) {
                         out.print("{success: false, error: 'Database error, cannot delete!'}");
                     }
                 } catch (NoResultException noResultException) {
-                    out.print("{success: false, " +
-                            "error: 'Group with id \"" + idGrp + "\" does not exist.'}");
+                    out.print("{success: false, "
+                            + "error: 'Group with id \"" + idGrp + "\" does not exist.'}");
                 } catch (NumberFormatException numberFormatException) {
                     out.print("{success: false, error: 'idGrp is not a number!'}");
                 }
@@ -183,10 +181,10 @@ public class GroupAccountCtr extends HttpServlet {
             } else {
                 out.print("{success: false, error: 'Request parameter unknown!'}");
             }
-            dm.close();
         } catch (Exception e) {
             System.out.println(e.getMessage());
         } finally {
+            dm.closeIt();
             out.close();
         }
     }
@@ -215,7 +213,9 @@ public class GroupAccountCtr extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        System.out.println("\n\nGroup manager: enter " + this.toString());
         processRequest(request, response);
+        System.out.println("Group manager: exit "  + this.toString() + "\n\n");
     }
 
     /** 
