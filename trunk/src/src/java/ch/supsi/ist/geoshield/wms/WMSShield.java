@@ -97,7 +97,7 @@ public class WMSShield implements Filter {
             }
             //Services srv = dm.getServiceByName(service);
             String path = request.getPathInfo();
-
+            
             // ************************************************************
             // Check user request
             // ************************************************************
@@ -105,22 +105,21 @@ public class WMSShield implements Filter {
             if (requestParam == null) {
                 throw new ServiceException("Parameter name 'Request' is mandatory.");
             }
-
-            AuthorityManager am = new AuthorityManager();
-
+            
             ServicesUrls sur = dm.getServicesUrlsByPathIdSrv(request.getPathInfo(), "WMS");
             usr = (Users) request.getAttribute("user");
-
+            
             Requests reqs = dm.getRequestByNameReqNameSrv(requestParam, service);
+            AuthorityManager am = new AuthorityManager();
+            
             if (!am.checkUsrAuthOnSrvSurReq(usr, sur, reqs, dm)) {
                 throw new ServiceException("User " + usr.getNameUsr() + " is not authorized to make"
                         + " REQUEST '" + request + "' on SERVICE '" + service + "' for the given "
                         + " PATH '" + path + "'.", ServiceException.SERVICE_AUTHENTICATION);
             }
-
+            
             if (!requestParam.equalsIgnoreCase("GETCAPABILITIES")) {
-
-
+                
                 // ************************************************************
                 // Get requested layers
                 // ************************************************************
@@ -139,10 +138,10 @@ public class WMSShield implements Filter {
                 List<Layers> lays = dm.getLayers(path, layers.split(","), "WMS");
                 
                 // ************************************************************
-                // Looking for user
+                // Looking for user *******************************************
                 // ************************************************************
                 usr = null;
-
+                
                 if (path.equalsIgnoreCase("/public")) {
                     usr = (Users) request.getAttribute("publicUser");
                 } else {
@@ -240,8 +239,8 @@ public class WMSShield implements Filter {
 
         if (Utility.getHttpParam("REQUEST", request).equalsIgnoreCase("GETCAPABILITIES")) {
 
-            byte[] by = (byte[]) request.getSession().getAttribute(OGCParser.BYTRES);
-            request.getSession().setAttribute(OGCParser.BYTRES, null);
+            byte[] by = (byte[]) request.getAttribute(OGCParser.BYTRES);
+            request.setAttribute(OGCParser.BYTRES, null);
 
             String charset = "UTF-8";
             String body = new String(by, charset);
@@ -283,8 +282,8 @@ public class WMSShield implements Filter {
 
             //   Filter request permitted on requested service
             ServicesUrls sur = dm.getServicesUrlsByPathIdSrv(request.getPathInfo(), "WMS");
-            usr = (Users) request.getSession().getAttribute("user");
-
+            usr = (Users) request.getAttribute("user");
+            
             Map<String, Requests> reqsAvailable = dm.getRequestByUsersServiceUrl(usr, sur);
             List<Node> reqsToRemove = new ArrayList<Node>(0);
 
@@ -334,6 +333,7 @@ public class WMSShield implements Filter {
                     break;
                 }
             }
+            
             // Controllo permessi utente
             AuthorityManager am = new AuthorityManager();
             List<Layers> lays = sur.getLayersCollection();//dm.getLayers(request.getPathInfo());
@@ -378,7 +378,7 @@ public class WMSShield implements Filter {
                 lay.removeChild(it.next());
             }
 
-            request.getSession().setAttribute(OGCParser.BYTRES, XmlUtils.xmlToString(doc).getBytes());
+            request.setAttribute(OGCParser.BYTRES, XmlUtils.xmlToString(doc).getBytes());
         }
 
     }

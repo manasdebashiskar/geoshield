@@ -25,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package ch.supsi.ist.geoshield.servlet.admin;
 
 import ch.supsi.ist.geoshield.data.DataManager;
@@ -34,12 +33,15 @@ import ch.supsi.ist.geoshield.data.LayersPermissions;
 import ch.supsi.ist.geoshield.data.ServicesUrls;
 import ch.supsi.ist.geoshield.exception.ServiceException;
 import ch.supsi.ist.geoshield.shields.CacheFilter;
+import ch.supsi.ist.geoshield.shields.CacheFilterUtils;
 import ch.supsi.ist.geoshield.utils.Utility;
 import flexjson.JSONSerializer;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.persistence.NoResultException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -58,15 +60,14 @@ public class LayersManagerCtr extends HttpServlet {
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
      */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+    protected synchronized void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
         //DataManager dm = new DataManager();
-        DataManager dm = (DataManager)request.getAttribute(
-                CacheFilter.GEOSHIELD_DATAMANAGER);
-        //System.out.println("***************************************************");
-        //System.out.println("LayersManagerCtr:");
+        DataManager dm = new DataManager();
+        //dm.recreate();
+        
         try {
             String req = Utility.getHttpParam("REQUEST", request);
             //System.out.println("Request: " + req);
@@ -78,7 +79,6 @@ public class LayersManagerCtr extends HttpServlet {
             }
             if (req.equalsIgnoreCase("layers")) {
                 try {
-                    dm.recreate();
                     List<Layers> lays = dm.getLayers();
                     if (filterArr != null) {
                         for (Iterator<Layers> it = lays.iterator(); it.hasNext();) {
@@ -176,12 +176,11 @@ public class LayersManagerCtr extends HttpServlet {
                         out.print("{success: false, error: 'Database error!'}");
                     }
                 } catch (NoResultException noResultException) {
-                    out.print("{success: false, " +
-                            "error: 'Layer with id \"" + idLay + "\" does not exist.'}");
+                    out.print("{success: false, "
+                            + "error: 'Layer with id \"" + idLay + "\" does not exist.'}");
                 }
             } else if (req.equalsIgnoreCase("layersPermissions")) {
                 try {
-                    dm.recreate();
                     List<LayersPermissions> lprs = dm.getLayersPermissions();
                     if (filterArr != null) {
                         for (Iterator<LayersPermissions> it = lprs.iterator(); it.hasNext();) {
@@ -246,7 +245,6 @@ public class LayersManagerCtr extends HttpServlet {
                     LayersPermissions lpr = null;
                     try {
                         try {
-                            dm.recreate();
                             lpr = dm.getLayersPermissionsByIdGrpIdLay(
                                     Integer.parseInt(idGrp), Integer.parseInt(idLay));
                             //System.out.println("LayersPermissions exist: " + lpr.getIdLpr());
@@ -280,8 +278,9 @@ public class LayersManagerCtr extends HttpServlet {
             } else {
                 out.print("{success: false, error: 'Request parameter unknown!'}");
             }
+            dm.closeIt();
         } finally {
-            dm.close();
+            dm.closeIt();
             out.close();
         }
     }
@@ -321,4 +320,10 @@ public class LayersManagerCtr extends HttpServlet {
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
+    
+    @Override
+    public void destroy(){
+        Logger.getLogger(LayersManagerCtr.class.getName()).log(Level.INFO, "LayersManagerCtr destroyed!");
+    }
+    
 }

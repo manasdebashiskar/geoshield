@@ -61,53 +61,55 @@ public class UserShield implements Filter {
     private HashMap<String, Users> usersCache;
 
     public UserShield() {
+        
     }
 
-    private void doBeforeProcessing(RequestWrapper req, ResponseWrapper res)
+    private void doBeforeProcessing(RequestWrapper request, ResponseWrapper response)
             throws IOException, ServletException, UserException {
 
         // @todo check if channel is secured
+        String path = request.getPathInfo();
 
-        String path = req.getPathInfo();
-
-        DataManager cdm = CacheFilterUtils.getDataManagerCached(req);
+        DataManager cdm = CacheFilterUtils.getDataManagerCached(request);
 
         // If asked a public url, authentication is not needed
         // @todo recode this public user access mess
         if (path.equalsIgnoreCase("/public")) {
             Users usr = null;
             try {
-                usr = (Users) req.getSession().getAttribute("publicUser");
+                usr = (Users) request.getSession().getAttribute("publicUser");
             } catch (IllegalStateException e) {
                 System.err.println(e.toString());
                 usr = null;
             }
             if (usr == null) {
                 usr = cdm.getUser("public");
-                req.setAttribute("publicUser", usr);
-                req.getSession().setAttribute("publicUser", usr);
+                request.setAttribute("publicUser", usr);
+                request.getSession().setAttribute("publicUser", usr);
             }
         } else {
+            
             // Reading the authorization header to get user and password
-            String authHeader = req.getHeader("Authorization");
+            String authHeader = request.getHeader("Authorization");
             Users usr = null;
-
+            
             if (authHeader != null) {
-                if (CacheFilterUtils.resyncNeeded(req)) {
-                    
+                
+                if (CacheFilterUtils.resyncNeeded(request)) {
                     AuthorityManager am = new AuthorityManager();
-                    usr = am.WWWAuthenticate(req);
+                    usr = am.WWWAuthenticate(request);
                     usersCache.put(authHeader, usr);
                 } else {
-                    // Check if user exist interface filter cache
+                    // Check if user exist in filter cache
                     if (usersCache.containsKey(authHeader)) {
                         usr = usersCache.get(authHeader);
                     } else {
                         AuthorityManager am = new AuthorityManager();
-                        usr = am.WWWAuthenticate(req);
+                        usr = am.WWWAuthenticate(request);
                         usersCache.put(authHeader, usr);
                     }
                 }
+                
             }
 
             if (usr == null) {
@@ -116,11 +118,12 @@ public class UserShield implements Filter {
                         UserException.LOGIN_ATTEMPT_FAILED);
             } else {
                 if (!usr.getIsActiveUsr().booleanValue()) {
-                    res.sendRedirect("/istShield/error/userExpired.jsp");
+                    response.sendRedirect("/istShield/error/userExpired.jsp");
                 } else {
-                    req.setAttribute("user", usr);
+                    request.setAttribute("user", usr);
                 }
             }
+            
         }
     }
 
@@ -140,7 +143,7 @@ public class UserShield implements Filter {
                 wrappedResponse.sendError(ResponseWrapper.SC_FORBIDDEN);
                 response.getWriter().close();
             } else if (((UserException) t).getCode().equals(UserException.LOGIN_ATTEMPT_FAILED)) {
-                wrappedResponse.setHeader("WWW-Authenticate", "BASIC realm=\"GeoShield Realm\"");
+                wrappedResponse.setHeader("WWW-Authenticate", "BASIC realm=\""+request.getAttribute(CacheFilter.GEOSHIELD_REALM)+"\"");
                 wrappedResponse.sendError(ResponseWrapper.SC_UNAUTHORIZED);
                 response.getWriter().close();
             }
@@ -156,42 +159,26 @@ public class UserShield implements Filter {
         }
     }
 
-    /**
-     * Return the filter configuration object for this filter.
-     */
     public FilterConfig getFilterConfig() {
         return (this.filterConfig);
     }
 
-    /**
-     * Set the filter configuration object for this filter.
-     *
-     * @param filterConfig The filter configuration object
-     */
     public void setFilterConfig(FilterConfig filterConfig) {
         this.filterConfig = filterConfig;
     }
 
-    /**
-     * Destroy method for this filter 
-     */
     @Override
     public void destroy() {
         this.usersCache = null;
     }
 
-    /**
-     * Init method for this filter 
-     */
     @Override
     public void init(FilterConfig filterConfig) {
         this.filterConfig = filterConfig;
+        
         this.usersCache = new HashMap<String, Users>();
     }
 
-    /**
-     * Return a String representation of this object.
-     */
     @Override
     public String toString() {
         if (filterConfig == null) {

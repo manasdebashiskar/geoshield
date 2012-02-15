@@ -169,7 +169,9 @@ public class Utility {
 
         // minX         minY         maxX          maxY
         //713402.476015,87913.814786,725613.387244,103605.40632
+        
         String[] coords = bbox.split(",");
+        // BBOX coordinates
         double minX = Double.parseDouble(coords[0]);
         double minY = Double.parseDouble(coords[1]);
         double maxX = Double.parseDouble(coords[2]);
@@ -178,12 +180,12 @@ public class Utility {
         double deltaX = maxX - minX;
         double deltaY = maxY - minY;
 
-        double xRes = width / deltaX;
-        double yRes = width / deltaY;
+        double xRes = deltaX / width ;
+        double yRes = deltaY / height;
 
         ret[0] = x * xRes + minX;
         ret[1] = y * yRes + minY;
-        //System.out.println("Coord: " + ret[0] + " " + ret[1]);
+        
         return ret;
     }
 

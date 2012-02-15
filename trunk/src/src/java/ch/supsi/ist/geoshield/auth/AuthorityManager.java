@@ -35,6 +35,7 @@ import java.util.List;
 import ch.supsi.ist.geoshield.data.*;
 import ch.supsi.ist.geoshield.exception.ServiceException;
 import ch.supsi.ist.geoshield.exception.UserException;
+import ch.supsi.ist.geoshield.shields.CacheFilterUtils;
 import ch.supsi.ist.geoshield.utils.Utility;
 import java.util.Date;
 import java.util.Iterator;
@@ -135,6 +136,7 @@ public class AuthorityManager {
      *
      * @author Milan Antonovic
      */
+    @Deprecated
     public synchronized boolean checkUsrAuthOnSrvSurReq(
             Users usr, ServicesUrls sur, Requests req) throws UserException {
         
@@ -192,15 +194,8 @@ public class AuthorityManager {
     public synchronized boolean checkUsrAuthOnSrvSurReq(
             Users usr, ServicesUrls sur, Requests req, DataManager dm) throws UserException {
 
-        //DataManager dm = new DataManager();
-
-        //System.out.println("\nUser: " + usr.getNameUsr() + " has ");
-        //System.out.println("   > " + usr.getGroups().size() + " groups.");
-
         Date now = new Date();
         List<GroupsUsers> usrGrp = usr.getGroupsUsers();
-        
-        //System.out.println("User member of " + usrGrp.size() + " groups.");
         
         boolean expired = false;
         String gName = "";
@@ -208,41 +203,27 @@ public class AuthorityManager {
         // Loop groups
         for (Iterator<GroupsUsers> it = usrGrp.iterator(); it.hasNext();) {
             GroupsUsers gus = it.next();
-            //System.out.println(" > Group: " + gus.getIdGrpFk().getNameGrp());
-            
             // Check if expired
             if (gus.getExpirationGus() == null || gus.getExpirationGus().compareTo(now) >= 0) {
 
                 int idGrp = gus.getIdGrpFk().getIdGrp();
                 try {
-
                     ServicesPermissions sp = dm.getServicePermissionBySurGrp(
                             sur.getIdSur(), idGrp);
-
-                    //System.out.println(" > ServicesPermissions: " + sp.getIdSpr());
-
                     for (Iterator<SprReq> grIt = sp.getSprReqCollection().iterator(); grIt.hasNext();) {
                         SprReq sre = grIt.next();
-                        //System.out.println(" > SprReq: " + sre.getIdSre());
-                        //System.out.println(" > SprReq: " + sre.getIdReqFk().getIdReq());
-                        //System.out.println(" > req: " + req.getIdReq());
                         if (sre.getIdReqFk().equals(req)) {
-                            //dm.close();
-                            //System.out.println("Access OK");
                             return true;
                         }
                     }
-                    //dm.close();
                 } catch (NoResultException e) {
                     continue;
-                //System.out.println(e.toString());
                 }
             } else {
                 expired = true;
                 gName = gus.getIdGrpFk().getNameGrp();
             }
         }
-        //dm.close();
         if (expired) {
             throw new UserException(
                     "Sorry! the access to service '" + sur.getPathSur() + "' from group '" + gName + "' is expired.",
@@ -272,7 +253,8 @@ public class AuthorityManager {
         String userpassDecoded = new String(b);
 
         //DataManager dm = Utility.getDmSession(req);
-        DataManager dm = Utility.getDmSession(req);
+        //DataManager dm = Utility.getDmSession(req);
+        DataManager dm = CacheFilterUtils.getDataManagerCached(req);
         //System.out.println("Usint datamanger from session obj..");
         try {
             //System.out.println("userpassDecoded: " + userpassDecoded);

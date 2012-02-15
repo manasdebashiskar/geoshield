@@ -86,6 +86,7 @@ public class FilterAuth {
      *
      * @author Milan Antonovic
      */
+    @Deprecated
     public synchronized Filter getFilter(Users usr, Layers lay)
             throws ServiceException {
         List<Groups> grps = usr.getGroups();
@@ -129,22 +130,6 @@ public class FilterAuth {
                     LayersPermissions layPrm = null;
                     try {
                         layPrm = dm.getLayersPermissionsByGrpLay(grp, lay);
-                        /*
-                        if (layPrm.getFilterLpr().equalsIgnoreCase("EXCLUDE")) {
-                        System.out.println(grp.getNameGrp() + ">" + lay.getNameLay() + " - Adding filter 1=1");
-                        fils.add(CQL.toFilter("mb=ma"));
-                        } else if (layPrm.getFilterLpr().equalsIgnoreCase("INCLUDE")) {
-                        if (incl) {
-                        continue;
-                        }
-                        incl = true;
-                        fils = new LinkedList<Filter>();
-                        fils.add(CQL.toFilter(layPrm.getFilterLpr()));
-                        System.out.println(grp.getNameGrp() + ">" + lay.getNameLay() + " - Adding include filter");
-                        break;
-                        } else {
-                         */
-                        //System.out.println(grp.getNameGrp() + ">" + lay.getNameLay() + " - Adding filter " + layPrm.getFilterLpr());
                         fils.add(CQL.toFilter(layPrm.getFilterLpr()));
                         //System.out.println("   > " + CQL.toFilter(layPrm.getFilterLpr()).toString());
                         //}
@@ -173,14 +158,8 @@ public class FilterAuth {
 
     public synchronized Filter getFilter(Users usr, Layers lay, DataManager dm)
             throws ServiceException {
-        /*long milli = Utility.getMillis();
-        System.out.println("*****getfilter*****");
-        System.out.println(" - " + lay.getNameLay());*/
-        //System.out.println("*****getfilter*****");
-        //System.out.println(" - " + lay.getNameLay());
         List<Groups> grps = usr.getGroups();
         List<Filter> fils = new LinkedList<Filter>();
-        //DataManager dm = new DataManager();
         try {
             boolean incl = false;
             boolean extcl = false;
@@ -192,7 +171,6 @@ public class FilterAuth {
                 try {
                     layPrm = dm.getLayersPermissionsByGrpLay(grp, lay);
                     int priorityFilter = FiltersUtils.getPriorityFilter(layPrm.getFilterLpr());
-                    //System.out.println(" > priorityFilter: " + priorityFilter);
                     if (priorityFilter == 1) { // EXCLUDE
                         extcl = true;
                     } else if (priorityFilter == 4) { // INCLUDE
@@ -200,7 +178,6 @@ public class FilterAuth {
                         break;
                     } else if (priorityFilter == 2) { // SPATIAL
                         spatial = true;
-                        //System.out.println(" > Filter: " + layPrm.getFilterLpr());
                         fils.add(CQL.toFilter(layPrm.getFilterLpr()));
                     } else {
                         other = true;
@@ -208,52 +185,26 @@ public class FilterAuth {
                     }
                 } catch (NoResultException noResultException) {
                     it.remove();
-                    //System.out.println("Failed for: group=" + grp.getNameGrp() + " layer=" + lay.getNameLay());
+                    extcl = true;
                     continue;
                 }
             }
-            //System.out.println(" > fils size: " + fils.size());
-            //System.out.println(" > fils toString: " + fils.toString());
-            /*milli = Utility.getMillis() - milli;
-            System.out.println(" 1 >>> " + milli);
-            milli = Utility.getMillis();*/
             if (incl) {
                 // INCLUDE WIN OVER ALL FILTERS
                 fils = new LinkedList<Filter>();
                 fils.add(CQL.toFilter("INCLUDE"));
-                //System.out.println("Adding only filter INCLUDE");
 
             } else if (extcl && !(spatial || other)) {
                 fils = new LinkedList<Filter>();
-                //fils.add(CQL.toFilter("mb=ma"));
                 fils.add(CQL.toFilter("fid=-1"));
-                //System.out.println("Adding only filter EXCLUDE");
-            }/* else {
-            for (Iterator<Groups> it = grps.iterator(); it.hasNext();) {
-            Groups grp = it.next();
-            LayersPermissions layPrm = null;
-            try {
-            layPrm = dm.getLayersPermissionsByGrpLay(grp, lay);fils.add(CQL.toFilter(layPrm.getFilterLpr()));
-            } catch (NoResultException noResultException) {
-            continue;
             }
-            }
-            }*/
         } catch (CQLException ex) {
             throw new ServiceException("Error getting users filter.");
-        }/* catch (NoResultException nre){
-        throw new ServiceException("Error getting users filter.");
-        } finally {
-        dm.close();
-        }*/
+        }
         if (fils.size() == 1) {
-            /*milli = Utility.getMillis() - milli;
-            System.out.println(" 2.1 >>> " + milli);*/
             return fils.get(0);
         } else if (fils.size() > 1) {
             FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
-            /*milli = Utility.getMillis() - milli;
-            System.out.println(" 2.2 >>> " + milli);*/
             return ff.or(fils);
         } else {
             throw new ServiceException("Error getting users filter.");

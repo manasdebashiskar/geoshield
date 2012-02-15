@@ -25,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package ch.supsi.ist.geoshield.servlet.admin;
 
 import ch.supsi.ist.geoshield.data.DataManager;
@@ -33,6 +32,7 @@ import ch.supsi.ist.geoshield.data.GroupsUsers;
 import ch.supsi.ist.geoshield.data.Users;
 import ch.supsi.ist.geoshield.exception.ServiceException;
 import ch.supsi.ist.geoshield.shields.CacheFilter;
+import ch.supsi.ist.geoshield.shields.CacheFilterUtils;
 import ch.supsi.ist.geoshield.utils.Utility;
 import flexjson.DateTransformer;
 import flexjson.JSONSerializer;
@@ -59,209 +59,195 @@ public class UserAccountCtr extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     @PersistenceContext
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+    protected synchronized void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
-        //DataManager dm = new DataManager();
-        
-        DataManager dm = (DataManager)request.getAttribute(
-                CacheFilter.GEOSHIELD_DATAMANAGER);
+
+
         try {
             String req = Utility.getHttpParam("REQUEST", request);
             if (req.equalsIgnoreCase("users")) {
-                try {
-                    List<Users> usrs = dm.getUsers();
-                    //dm.refreshList(usrs);
-                    JSONSerializer json = new JSONSerializer();
-                    json = json.transform(new DateTransformer("dd/MM/yyyy"), "groupsUsers.expirationGus");
-
-                    /*
-                    Map<String, List<String>> map = Utility.getDatesToTrasform("GroupsUsers");
-                    for (String key : map.keySet()){
-                    List<String> df = map.get(key);
-                    System.out.println("Key: " + key);
-                    System.out.println(" - " + df.toArray(new String[0]));
-                    System.out.println(" - " + df.toArray(new String[0])[0]);
-
-                    json = json.transform(new DateTransformer(key), df.toArray(new String[0]) );
+                synchronized (this) {
+                    DataManager dm = new DataManager();
+                    try {
+                        List<Users> usrs = dm.getUsers();
+                        JSONSerializer json = new JSONSerializer();
+                        json = json.transform(new DateTransformer("dd/MM/yyyy"), "groupsUsers.expirationGus");
+                        out.println(json.exclude("*.class").serialize("users", usrs));
+                    } catch (Exception e) {
+                        out.println(e.toString());
                     }
-                     */
-
-
-                    //System.out.println("JSON:\n" + json.exclude("*.class").prettyPrint("users", usrs));
-                    out.println(json.exclude("*.class").serialize("users", usrs));
-
-                } catch (Exception e) {
-                    out.println(e.toString());
-                } finally {
-                    dm.close();
+                    dm.closeIt();
+                    dm = null;
                 }
             } else if (req.equalsIgnoreCase("groupUsers")) {
-                try {
+                synchronized (this) {
+                    DataManager dm = new DataManager();
+                    try {
+                        String idGus = Utility.getHttpParam("idUsr", request);
+                        List<GroupsUsers> gus = null;
+                        if (idGus != null && !idGus.equalsIgnoreCase("")) {
+                            gus = dm.getGroupsUsersByIdUsr(Integer.parseInt(idGus));
+                        } else {
+                            gus = dm.getGroupsUsers();
+                        }
+                        JSONSerializer json = new JSONSerializer();
+                        json = json.transform(new DateTransformer("dd/MM/yyyy"), "expirationGus");
+                        out.println(json.exclude("*.class").exclude("idUsrFk").serialize("groupUsers", gus));
 
-                    String idGus = Utility.getHttpParam("idUsr", request);
-                    List<GroupsUsers> gus = null;
-                    if (idGus != null && !idGus.equalsIgnoreCase("")) {
-                        gus = dm.getGroupsUsersByIdUsr(Integer.parseInt(idGus));
-                    } else {
-                        gus = dm.getGroupsUsers();
+                    } catch (Exception e) {
+                        out.println(e.toString());
                     }
-                    JSONSerializer json = new JSONSerializer();
-                    json = json.transform(new DateTransformer("dd/MM/yyyy"), "expirationGus");
-                    out.println(json.exclude("*.class").exclude("idUsrFk").serialize("groupUsers", gus));
-
-                } catch (Exception e) {
-                    out.println(e.toString());
-                } finally {
-                    dm.close();
+                    dm.closeIt();
+                    dm = null;
                 }
             } else if (req.equalsIgnoreCase("updateGroupUser")) {
-                try {
-                    /*
-                    expirationGus
-                    idGus	13
-                    invoiceGus
-                     */
-                    String idGus = Utility.getHttpParam("idGus", request);
-                    String expirationGus = Utility.getHttpParam("expirationGus", request);
-                    String invoiceGus = Utility.getHttpParam("invoiceGus", request);
-                    GroupsUsers gus = null;
+                synchronized (this) {
+                    DataManager dm = new DataManager();
                     try {
-                        gus = dm.getGroupUsersById(Integer.parseInt(idGus));
-                        if (expirationGus == null || expirationGus.equalsIgnoreCase("")) {
-                            java.util.Date d = null;
-                            gus.setExpirationGus(d);
-                        } else {
-                            java.text.DateFormat df = new java.text.SimpleDateFormat("dd/MM/yyyy");
-                            gus.setExpirationGus(df.parse(expirationGus));
-                        }
-                        gus.setInvoiceGus(invoiceGus);
+                        String idGus = Utility.getHttpParam("idGus", request);
+                        String expirationGus = Utility.getHttpParam("expirationGus", request);
+                        String invoiceGus = Utility.getHttpParam("invoiceGus", request);
+                        GroupsUsers gus = null;
                         try {
-                            dm.persist(gus);
+                            gus = dm.getGroupUsersById(Integer.parseInt(idGus));
+                            if (expirationGus == null || expirationGus.equalsIgnoreCase("")) {
+                                java.util.Date d = null;
+                                gus.setExpirationGus(d);
+                            } else {
+                                java.text.DateFormat df = new java.text.SimpleDateFormat("dd/MM/yyyy");
+                                gus.setExpirationGus(df.parse(expirationGus));
+                            }
+                            gus.setInvoiceGus(invoiceGus);
+                            try {
+                                dm.persist(gus);
+                                out.print("{success: true}");
+                            } catch (ServiceException ex) {
+                                out.print("{success: false, error: 'Database error!'}");
+                            }
+                        } catch (NoResultException noResultException) {
+                            out.print("{success: false, error: 'Cannot find user with id \"" + idGus + "\"'}");
+                        }
+                    } catch (Exception e) {
+                        out.println(e.toString());
+                        out.print("{success: false, error: 'Internal error'}");
+                    }
+                    dm.closeIt();
+                    dm = null;
+                }
+            } else if (req.equalsIgnoreCase("insertUser")) {
+                synchronized (this) {
+                    DataManager dm = new DataManager();
+                    String nameUsr = Utility.getHttpParam("nameUsr", request);
+                    String pswUsr = Utility.getHttpParam("pswUsr", request);
+                    String firstNameUsr = Utility.getHttpParam("firstNameUsr", request);
+                    String lastNameUsr = Utility.getHttpParam("lastNameUsr", request);
+                    String emailUsr = Utility.getHttpParam("emailUsr", request);
+                    String officeUsr = Utility.getHttpParam("officeUsr", request);
+                    String telUsr = Utility.getHttpParam("telUsr", request);
+                    String faxUsr = Utility.getHttpParam("faxUsr", request);
+                    String addressUsr = Utility.getHttpParam("addressUsr", request);
+                    String isActiveUsr = Utility.getHttpParam("isActiveUsr", request);
+                    Users usr = null;
+                    try {
+                        usr = dm.getUser(nameUsr);
+                        out.print("{success: false, "
+                                + "error: 'User with name \"" + nameUsr + "\" already exist.'}");
+                    } catch (NoResultException noResultException) {
+                        usr = new Users();
+                        usr.setNameUsr(nameUsr);
+                        usr.setPswUsr(pswUsr);
+                        usr.setFirstNameUsr(firstNameUsr);
+                        usr.setLastNameUsr(lastNameUsr);
+                        usr.setEmailUsr(emailUsr);
+                        usr.setOfficeUsr(officeUsr);
+                        usr.setTelUsr(telUsr);
+                        usr.setFaxUsr(faxUsr);
+                        usr.setAddressUsr(addressUsr);
+                        if (isActiveUsr == null) {
+                            usr.setIsActiveUsr(Boolean.FALSE);
+                        } else {
+                            usr.setIsActiveUsr(Boolean.TRUE);
+                        }
+                        try {
+                            dm.persist(usr);
+                            out.print("{success: true}");
+                        } catch (ServiceException ex) {
+                            out.print("{success: false, error: 'Database error!'}");
+                        }
+                    }
+                    dm.closeIt();
+                    dm = null;
+                }
+            } else if (req.equalsIgnoreCase("updateUser")) {
+                synchronized (this) {
+                    DataManager dm = new DataManager();
+                    String idUsr = Utility.getHttpParam("idUsr", request);
+                    String nameUsr = Utility.getHttpParam("nameUsr", request);
+                    String pswUsr = Utility.getHttpParam("pswUsr", request);
+                    String firstNameUsr = Utility.getHttpParam("firstNameUsr", request);
+                    String lastNameUsr = Utility.getHttpParam("lastNameUsr", request);
+                    String emailUsr = Utility.getHttpParam("emailUsr", request);
+                    String officeUsr = Utility.getHttpParam("officeUsr", request);
+                    String telUsr = Utility.getHttpParam("telUsr", request);
+                    String faxUsr = Utility.getHttpParam("faxUsr", request);
+                    String addressUsr = Utility.getHttpParam("addressUsr", request);
+                    String isActiveUsr = Utility.getHttpParam("isActiveUsr", request);
+                    Users usr = null;
+                    try {
+                        usr = dm.getUser(Integer.parseInt(idUsr));
+                        usr.setNameUsr(nameUsr);
+                        usr.setPswUsr(pswUsr);
+                        usr.setFirstNameUsr(firstNameUsr);
+                        usr.setLastNameUsr(lastNameUsr);
+                        usr.setEmailUsr(emailUsr);
+                        usr.setOfficeUsr(officeUsr);
+                        usr.setTelUsr(telUsr);
+                        usr.setFaxUsr(faxUsr);
+                        usr.setAddressUsr(addressUsr);
+                        if (isActiveUsr == null) {
+                            usr.setIsActiveUsr(Boolean.FALSE);
+                        } else {
+                            usr.setIsActiveUsr(Boolean.TRUE);
+                        }
+                        try {
+                            dm.persist(usr);
                             out.print("{success: true}");
                         } catch (ServiceException ex) {
                             out.print("{success: false, error: 'Database error!'}");
                         }
                     } catch (NoResultException noResultException) {
-                        out.print("{success: false, error: 'Cannot find user with id \"" + idGus + "\"'}");
+                        out.print("{success: false, error: 'Cannot find user with id \"" + idUsr + "\"'}");
                     }
-                    /*String idGus = Utility.getHttpParam("idUsr", request);
-                    List<GroupsUsers> gus = null;
-                    if (idGus != null && !idGus.equalsIgnoreCase("")) {
-                    gus = dm.getGroupsUsersByIdUsr(Integer.parseInt(idGus));
-                    } else {
-                    gus = dm.getGroupsUsers();
-                    }
-                    JSONSerializer json = new JSONSerializer();
-                    json = json.transform(new DateTransformer("dd/MM/yyyy HH:mm:ss"), "expirationGus");
-                    out.println(json.exclude("*.class").exclude("idUsrFk").serialize("groupUsers", gus));
-
-                     */
-                } catch (Exception e) {
-                    out.println(e.toString());
-                    out.print("{success: false, error: 'Internal error'}");
-                } finally {
-                    dm.close();
-                }
-            } else if (req.equalsIgnoreCase("insertUser")) {
-                String nameUsr = Utility.getHttpParam("nameUsr", request);
-                String pswUsr = Utility.getHttpParam("pswUsr", request);
-                String firstNameUsr = Utility.getHttpParam("firstNameUsr", request);
-                String lastNameUsr = Utility.getHttpParam("lastNameUsr", request);
-                String emailUsr = Utility.getHttpParam("emailUsr", request);
-                String officeUsr = Utility.getHttpParam("officeUsr", request);
-                String telUsr = Utility.getHttpParam("telUsr", request);
-                String faxUsr = Utility.getHttpParam("faxUsr", request);
-                String addressUsr = Utility.getHttpParam("addressUsr", request);
-                String isActiveUsr = Utility.getHttpParam("isActiveUsr", request);
-                Users usr = null;
-                try {
-                    usr = dm.getUser(nameUsr);
-                    out.print("{success: false, "
-                            + "error: 'User with name \"" + nameUsr + "\" already exist.'}");
-                } catch (NoResultException noResultException) {
-                    usr = new Users();
-                    usr.setNameUsr(nameUsr);
-                    usr.setPswUsr(pswUsr);
-                    usr.setFirstNameUsr(firstNameUsr);
-                    usr.setLastNameUsr(lastNameUsr);
-                    usr.setEmailUsr(emailUsr);
-                    usr.setOfficeUsr(officeUsr);
-                    usr.setTelUsr(telUsr);
-                    usr.setFaxUsr(faxUsr);
-                    usr.setAddressUsr(addressUsr);
-                    if (isActiveUsr==null) {
-                        usr.setIsActiveUsr(Boolean.FALSE);
-                    } else {
-                        usr.setIsActiveUsr(Boolean.TRUE);
-                    }
-                    try {
-                        dm.persist(usr);
-                        out.print("{success: true}");
-                    } catch (ServiceException ex) {
-                        out.print("{success: false, error: 'Database error!'}");
-                    }
-                }
-            } else if (req.equalsIgnoreCase("updateUser")) {
-                String idUsr = Utility.getHttpParam("idUsr", request);
-                String nameUsr = Utility.getHttpParam("nameUsr", request);
-                String pswUsr = Utility.getHttpParam("pswUsr", request);
-                String firstNameUsr = Utility.getHttpParam("firstNameUsr", request);
-                String lastNameUsr = Utility.getHttpParam("lastNameUsr", request);
-                String emailUsr = Utility.getHttpParam("emailUsr", request);
-                String officeUsr = Utility.getHttpParam("officeUsr", request);
-                String telUsr = Utility.getHttpParam("telUsr", request);
-                String faxUsr = Utility.getHttpParam("faxUsr", request);
-                String addressUsr = Utility.getHttpParam("addressUsr", request);
-                String isActiveUsr = Utility.getHttpParam("isActiveUsr", request);
-                Users usr = null;
-                try {
-                    usr = dm.getUser(Integer.parseInt(idUsr));
-                    usr.setNameUsr(nameUsr);
-                    usr.setPswUsr(pswUsr);
-                    usr.setFirstNameUsr(firstNameUsr);
-                    usr.setLastNameUsr(lastNameUsr);
-                    usr.setEmailUsr(emailUsr);
-                    usr.setOfficeUsr(officeUsr);
-                    usr.setTelUsr(telUsr);
-                    usr.setFaxUsr(faxUsr);
-                    usr.setAddressUsr(addressUsr);
-                    if (isActiveUsr==null) {
-                        usr.setIsActiveUsr(Boolean.FALSE);
-                    } else {
-                        usr.setIsActiveUsr(Boolean.TRUE);
-                    }
-                    try {
-                        dm.persist(usr);
-                        out.print("{success: true}");
-                    } catch (ServiceException ex) {
-                        out.print("{success: false, error: 'Database error!'}");
-                    }
-                } catch (NoResultException noResultException) {
-                    out.print("{success: false, error: 'Cannot find user with id \"" + idUsr + "\"'}");
+                    dm.closeIt();
+                    dm = null;
                 }
             } else if (req.equalsIgnoreCase("deleteUser")) {
-                String idUsr = Utility.getHttpParam("idUsr", request);
-                Users usr = null;
-                try {
-                    usr = dm.getUser(Integer.parseInt(idUsr));
-                    //System.out.println("Found user to remove: " + usr.getNameUsr());
+                synchronized (this) {
+                    DataManager dm = new DataManager();
+                    String idUsr = Utility.getHttpParam("idUsr", request);
+                    Users usr = null;
                     try {
-                        dm.remove(usr);
-                        out.print("{success: true}");
-                    } catch (ServiceException ex) {
-                        out.print("{success: false, error: 'Database error!'}");
+                        usr = dm.getUser(Integer.parseInt(idUsr));
+                        //System.out.println("Found user to remove: " + usr.getNameUsr());
+                        try {
+                            dm.remove(usr);
+                            out.print("{success: true}");
+                        } catch (ServiceException ex) {
+                            out.print("{success: false, error: 'Database error!'}");
+                        }
+                    } catch (NoResultException noResultException) {
+                        out.print("{success: false, "
+                                + "error: 'User with id \"" + idUsr + "\" does not exist.'}");
                     }
-                } catch (NoResultException noResultException) {
-                    out.print("{success: false, "
-                            + "error: 'User with id \"" + idUsr + "\" does not exist.'}");
+                    dm.closeIt();
+                    dm = null;
                 }
             } else {
                 out.print("{success: false, error: 'Request parameter unknown!'}");
             }
         } finally {
-            dm.close();
             out.close();
         }
     }

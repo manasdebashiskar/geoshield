@@ -33,6 +33,7 @@ import ch.supsi.ist.geoshield.data.Offerings;
 import ch.supsi.ist.geoshield.data.OfferingsPermissions;
 import ch.supsi.ist.geoshield.exception.ServiceException;
 import ch.supsi.ist.geoshield.shields.CacheFilter;
+import ch.supsi.ist.geoshield.shields.CacheFilterUtils;
 import ch.supsi.ist.geoshield.utils.Utility;
 import flexjson.JSONSerializer;
 import java.io.IOException;
@@ -58,14 +59,13 @@ public class OfferingsManagerCtr extends HttpServlet {
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
      */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+    protected synchronized void processRequest(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
-        //DataManager dm = new DataManager();
         
-        DataManager dm = (DataManager)request.getAttribute(
-                CacheFilter.GEOSHIELD_DATAMANAGER);
+        DataManager dm = new DataManager();
+        
         try {
             System.out.println("OfferingsManagerCtr: ");
             String req = Utility.getHttpParam("REQUEST", request);
@@ -78,7 +78,6 @@ public class OfferingsManagerCtr extends HttpServlet {
             }
             if (req.equalsIgnoreCase("offerings")) {
                 try {
-                    dm.recreate();
                     List<Offerings> ofrs = dm.getOfferings();
 
                     if (filterArr != null) {
@@ -97,8 +96,6 @@ public class OfferingsManagerCtr extends HttpServlet {
 
                 } catch (Exception e) {
                     out.println(e.toString());
-                } finally {
-                    dm.close();
                 }
             } else if(req.equalsIgnoreCase("checkOfferingsPermissions")){
                 String idGrp = Utility.getHttpParam("idGrp", request);
@@ -151,7 +148,7 @@ public class OfferingsManagerCtr extends HttpServlet {
                 out.print("{success: false, error: 'Request parameter unknown!'}");
             }
         } finally {
-            dm.close();
+            dm.closeIt();
             out.close();
         }
     } 
@@ -180,7 +177,9 @@ public class OfferingsManagerCtr extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
+        System.out.println("\n\nOfferings manager: enter " + this.toString());
         processRequest(request, response);
+        System.out.println("Offerings manager: exit "  + this.toString() + "\n\n");
     }
 
     /** 

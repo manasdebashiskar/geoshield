@@ -1,0 +1,17 @@
+<script type="text/javascript" src="app/view/ui/MainPanel.js"></script>
+<script type="text/javascript" src="app/view/MainPanel.js"></script>
+<script type="text/javascript" src="app/view/ui/BasePage.js"></script>
+<script type="text/javascript" src="app/view/BasePage.js"></script>
+<script type="text/javascript" src="app/view/ui/FormContactInfo.js"></script>
+<script type="text/javascript" src="app/view/FormContactInfo.js"></script>
+<script type="text/javascript" src="app/view/ui/FormAbout.js"></script>
+<script type="text/javascript" src="app/view/FormAbout.js"></script>
+<script type="text/javascript" src="app/view/ui/FormContacts.js"></script>
+<script type="text/javascript" src="app/view/FormContacts.js"></script>
+<script type="text/javascript" src="app/view/ui/FormConfig.js"></script>
+<script type="text/javascript" src="app/view/FormConfig.js"></script>
+<script type="text/javascript" src="app/view/ui/FormDatabase.js"></script>
+<script type="text/javascript" src="app/view/FormDatabase.js"></script>
+<script type="text/javascript" src="app/view/ui/FormDataQuality.js"></script>
+<script type="text/javascript" src="app/view/FormDataQuality.js"></script>
+<script type="text/javascript" src="app/store/DataQualityStore.js"></script>

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
     <display-name>GeoShield</display-name>
+    <context-param>
+        <param-name>GEOSHIELD_REALM</param-name>
+        <param-value>Institute of Earth Science</param-value>
+    </context-param>
     <filter>
         <filter-name>UserShiled</filter-name>
         <filter-class>ch.supsi.ist.geoshield.shields.UserShield</filter-class>
@@ -34,16 +38,18 @@
         <filter-class>ch.supsi.ist.geoshield.shields.CacheFilter</filter-class>
         <init-param>
             <param-name>CACHE_RESYNC</param-name>
-            <param-value>10</param-value>
+            <param-value>20000</param-value>
         </init-param>
     </filter>
     <filter-mapping>
         <filter-name>CacheFilter</filter-name>
         <url-pattern>/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
     <filter-mapping>
         <filter-name>UserShiled</filter-name>
         <url-pattern>/wms/*</url-pattern>
+        <url-pattern>/wfs/*</url-pattern>
         <url-pattern>/sos/*</url-pattern>
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
@@ -121,6 +127,10 @@
         <servlet-name>GeoshieldResourceAccessManagerCtr</servlet-name>
         <servlet-class>ch.supsi.ist.geoshield.ramplugin.GeoshieldResourceAccessManagerCtr</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>AuthUserServer</servlet-name>
+        <servlet-class>ch.supsi.ist.geoshield.wsgi.AuthUserServer</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>UserAccountCtr</servlet-name>
         <url-pattern>/admin/admin/UserAccountCtr</url-pattern>
@@ -164,6 +174,10 @@
     <servlet-mapping>
         <servlet-name>GeoshieldResourceAccessManagerCtr</servlet-name>
         <url-pattern>/gram</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AuthUserServer</servlet-name>
+        <url-pattern>/waus</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

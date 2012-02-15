@@ -48,6 +48,8 @@ import javax.persistence.Persistence;
 import javax.persistence.Query;
 import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceContextType;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.ParserConfigurationException;
 import org.geotools.filter.text.cql2.CQLException;
@@ -61,14 +63,15 @@ import org.xml.sax.SAXException;
 public class DataManager {
 
     // CREATE  emf.createEntityManager(); on class initialization
-    
     private EntityManagerFactory emf;
+    //@PersistenceContext (unitName="GeoshieldPU")
     private EntityManager entMan;
 
     public DataManager() {
         emf = Persistence.createEntityManagerFactory("GeoshieldPU");
         entMan = emf.createEntityManager();
         entMan.setFlushMode(FlushModeType.COMMIT);
+        Logger.getLogger(DataManager.class.getName()).log(Level.INFO, "DataManager connected!");
     }
 
     // APPLICATION ----------------------------------------
@@ -138,6 +141,30 @@ public class DataManager {
         Users ret = getUser(ah.getIdUsr());
         entMan.refresh(ret);
         return ret;
+    }
+
+    public synchronized List<Users> getUsersBySurSrv(
+            String url)
+            throws NoResultException {
+        String queryString = "SELECT  "
+                + "  distinct public.users.* "
+                + "FROM  "
+                + "  public.services_urls,  "
+                + "  public.services_permissions,  "
+                + "  public.groups,  "
+                + "  public.groups_users,  "
+                + "  public.users "
+                + "WHERE  "
+                + "  services_permissions.id_sur_fk = services_urls.id_sur AND "
+                + "  groups.id_grp = services_permissions.id_grp_fk AND "
+                + "  groups_users.id_grp_fk = groups.id_grp AND "
+                + "  groups_users.id_usr_fk = users.id_usr AND  "
+                + "  services_urls.url_sur = ? ";
+        //System.out.println("query: " + queryString);
+        Query q = entMan.createNativeQuery(queryString, Users.class);
+        q.setParameter(1, url);
+        //System.out.println("query: " + q.toString());
+        return q.getResultList();
     }
 
     // GROUPS ----------------------------------------
@@ -225,7 +252,7 @@ public class DataManager {
         query.setParameter("pathSur", path);
         try {
             ServicesUrls pu = (ServicesUrls) query.getSingleResult();
-            entMan.refresh(pu);
+            //entMan.refresh(pu);
             ret = pu.getLayersCollection();
         } catch (NonUniqueResultException e) {
             List<ServicesUrls> pu = query.getResultList();
@@ -235,10 +262,33 @@ public class DataManager {
             }
 
             throw new ServiceException("Sorry, the requested path '" + path + "' "
-                    + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
+                    + "' is not handled by this GeoShield.", ServiceException.INVALID_PARAMETER);
         } catch (NoResultException e) {
             throw new ServiceException("Sorry, the requested path '" + path + "' "
-                    + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
+                    + "' is not handled by this GeoShield.", ServiceException.INVALID_PARAMETER);
+        }
+        return ret;
+    }
+
+    /*
+     * Load all layers of a declared Service
+     */
+    public synchronized List<Layers> getLayersByUrl(String url)
+            throws ServiceException {
+        List<Layers> ret = null;
+        Query query = entMan.createNamedQuery("ServicesUrls.findByUrlSur");
+        query.setParameter("urlSur", url);
+        //System.out.println("Query: " + query.toString());
+        try {
+            ServicesUrls pu = (ServicesUrls) query.getSingleResult();
+            //entMan.refresh(pu);
+            ret = pu.getLayersCollection();
+        } catch (NonUniqueResultException e) {
+            throw new ServiceException("Sorry, the requested url '" + url + "' "
+                    + " is not handled by this GeoShield.", ServiceException.INVALID_PARAMETER);
+        } catch (NoResultException e) {
+            throw new ServiceException("Sorry, the requested path '" + url + "' "
+                    + " is not handled by this GeoShield.", ServiceException.INVALID_PARAMETER);
         }
         return ret;
     }
@@ -259,10 +309,10 @@ public class DataManager {
                 System.out.println(" > " + servicesUrls.getPathSur());
             }
             throw new ServiceException("Sorry, the requested path '" + path + "' "
-                    + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
+                    + "' is not handled by this GeoShield.", ServiceException.INVALID_PARAMETER);
         } catch (NoResultException e) {
             throw new ServiceException("Sorry, the requested path '" + path + "' "
-                    + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
+                    + "' is not handled by this GeoShield.", ServiceException.INVALID_PARAMETER);
         }
         return ret;
     }
@@ -279,19 +329,15 @@ public class DataManager {
             query.setParameter("idSrvFk", this.getServiceByName(service));
             try {
                 Layers lay = (Layers) query.getSingleResult();
-                //entMan.refresh(lay);
-                //System.out.println("  >> layer found: " + lay.getNameLay());
                 lays.add(lay);
-                //lays.add((Layers) query.getSingleResult());
             } catch (NoResultException e) {
                 throw new ServiceException("Sorry, the requested layer '" + layers[i] + "' for path '" + path
-                        + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
+                        + "' is not handled by this GeoShield.", ServiceException.INVALID_PARAMETER);
             }
         }
-        //this.refreshList(lays);
         return lays;
     }
-    
+
     public synchronized List<Layers> getLayersByUrlAndNameAndService(String url, String[] layers, String service)
             throws ServiceException {
         List<Layers> lays = new LinkedList<Layers>();
@@ -308,13 +354,13 @@ public class DataManager {
                 lays.add((Layers) query.getSingleResult());
             } catch (NoResultException e) {
                 throw new ServiceException("Sorry, the requested layer '" + layers[i] + "' for path '" + url
-                        + "' is not handled by this GSS.", ServiceException.INVALID_PARAMETER);
+                        + "' is not handled by this GeoShield.", ServiceException.INVALID_PARAMETER);
             }
         }
         //this.refreshList(lays);
         return lays;
     }
-    
+
     // SERVICES URLS ----------------------------------------
     public synchronized ServicesUrls getServicesUrls(int idSur)
             throws NoResultException {
@@ -327,7 +373,7 @@ public class DataManager {
         List<ServicesUrls> ret = query.getResultList();
         return ret;
     }
-    
+
     public synchronized ServicesUrls getServicesUrlsByPathIdSrv(String path, String service) throws ServiceException {
         //EntityManager em = emf.createEntityManager();
         Query query = getEntitiymanager().createNamedQuery("ServicesUrls.findByPathSurIdSrv");
@@ -339,11 +385,11 @@ public class DataManager {
             //entMan.refresh(ret);
         } catch (NoResultException e) {
             throw new ServiceException("Sorry, the requested path '" + path + "' are "
-                    + "not handled by this GSS.", ServiceException.INVALID_SERVER_URL);
+                    + "not handled by this GeoShield.", ServiceException.INVALID_SERVER_URL);
         }
         return ret;
     }
-    
+
     public synchronized ServicesUrls getServicesUrlsByUrlIdSrv(String url, String service) throws ServiceException {
         //EntityManager em = emf.createEntityManager();
         Query query = getEntitiymanager().createNamedQuery("ServicesUrls.findByUrlSurIdSrv");
@@ -355,7 +401,7 @@ public class DataManager {
             //entMan.refresh(ret);
         } catch (NoResultException e) {
             throw new ServiceException("Sorry, the requested path '" + url + "' are "
-                    + "not handled by this GSS.", ServiceException.INVALID_SERVER_URL);
+                    + "not handled by this GeoShield.", ServiceException.INVALID_SERVER_URL);
         }
         return ret;
     }
@@ -399,12 +445,79 @@ public class DataManager {
             int idSurFk, int idGrpFk)
             throws NoResultException {
         Groups g = this.getGroup(idGrpFk);
-        ServicesUrls s = this.getServicesUrls(idSurFk);        
+        ServicesUrls s = this.getServicesUrls(idSurFk);
         Query query = entMan.createNamedQuery("ServicesPermissions.findBySurGrp");
+        System.out.println("Groups: " + g);
+        System.out.println("ServicesUrls: " + s);
         query.setParameter("idGrpFk", g);
         query.setParameter("idSurFk", s);
         ServicesPermissions ret = (ServicesPermissions) query.getSingleResult();
         return ret;
+    }
+
+    public synchronized List<ServicesPermissions> getServicePermissionBySurUsr(
+            int idSurFk, int idUsrFk)
+            throws NoResultException {
+        Users g = this.getUser(idUsrFk);
+        ServicesUrls s = this.getServicesUrls(idSurFk);
+        Query query = entMan.createNamedQuery("ServicesPermissions.findBySurUsr");
+        query.setParameter("idSurFk", s);
+        query.setParameter("idUsr", g);
+        List<ServicesPermissions> ret = query.getResultList();
+        return ret;
+    }
+
+    public synchronized List<Requests> getRequestsBySurUsrSrv(
+            String url, String user, String type)
+            throws NoResultException {
+
+        String queryString = "SELECT  "
+                + "  distinct requests.* "
+                + "FROM  "
+                + "  public.requests,  "
+                + "  public.spr_req,  "
+                + "  public.services_permissions,  "
+                + "  public.services_urls,  "
+                + "  public.groups,  "
+                + "  public.groups_users,  "
+                + "  public.users, "
+                + "  public.services "
+                + "WHERE  "
+                + "  spr_req.id_req_fk = requests.id_req AND "
+                + "  spr_req.id_spr_fk = services_permissions.id_spr AND "
+                + "  services_permissions.id_sur_fk = services_urls.id_sur AND "
+                + "  services_urls.id_srv_fk = services.id_srv AND"
+                + "  groups.id_grp = services_permissions.id_grp_fk AND "
+                + "  groups_users.id_grp_fk = groups.id_grp AND "
+                + "  users.id_usr = groups_users.id_usr_fk AND "
+                + "  name_usr = ? AND "
+                + "  url_sur = ? AND "
+                + "  name_srv = ?";
+
+        //System.out.println("query: " + queryString);
+        Query q = entMan.createNativeQuery(queryString, Requests.class);
+        //q.setParameter(1, datum, TemporalType.DATE);
+        //q.setParameter(2, vykladka.getIdvykladka());
+        q.setParameter(1, user);
+        q.setParameter(2, url);
+        q.setParameter(3, type);
+
+        return q.getResultList();
+
+        /*List<Requests> result = q.getResultList();
+        for (Requests o : result) {
+        System.out.println(o.getNameReq());
+        }
+        return null;*/
+
+        /*
+        Users g = this.getUser(idUsrFk);
+        ServicesUrls s = this.getServicesUrls(idSurFk);
+        Query query = entMan.createNamedQuery("ServicesPermissions.findBySurUsr");
+        query.setParameter("idSurFk", s);
+        query.setParameter("idUsr", g);
+        List<ServicesPermissions> ret = query.getResultList();
+        return ret;*/
     }
 
     public synchronized ServicesPermissions getServicePermission(
@@ -473,11 +586,15 @@ public class DataManager {
         Map<String, Requests> ret = new HashMap<String, Requests>();
         for (ListIterator<Groups> isG = usr.getGroups().listIterator(); isG.hasNext();) {
             Groups g = isG.next();
+            try{
             ServicesPermissions sp = this.getServicePermissionBySurGrp(sur.getIdSur(), g.getIdGrp());
             for (ListIterator<SprReq> itSr =
                     sp.getSprReqCollection().listIterator(); itSr.hasNext();) {
                 SprReq sr = itSr.next();
                 ret.put(sr.getIdReqFk().getNameReq().toUpperCase(), sr.getIdReqFk());
+            }
+            }catch (NoResultException nre){
+                System.err.println("NoResultException: " + nre);
             }
         }
         return ret;
@@ -508,6 +625,31 @@ public class DataManager {
         query.setParameter("idGrp", g);
         LayersPermissions ret = (LayersPermissions) query.getSingleResult();
         return ret;
+    }
+
+    public synchronized List<LayersPermissions> getLayersPermissionsByIdLayUsr(
+            String usrName, int id_lay)
+            throws NoResultException {
+        String queryString = "SELECT  "
+                + "  layers_permissions.* "
+                + "FROM  "
+                + "  public.users,  "
+                + "  public.groups_users,  "
+                + "  public.groups,  "
+                + "  public.layers_permissions,  "
+                + "  public.layers "
+                + "WHERE  "
+                + "  groups_users.id_grp_fk = groups.id_grp AND "
+                + "  groups_users.id_usr_fk = users.id_usr AND "
+                + "  groups.id_grp = layers_permissions.id_grp_fk AND "
+                + "  layers_permissions.id_lay_fk = layers.id_lay AND "
+                + "  users.name_usr = ? AND "
+                + "  layers.id_lay = ?";
+        Query q = entMan.createNativeQuery(queryString, LayersPermissions.class);
+        q.setParameter(1, usrName);
+        q.setParameter(1, id_lay);
+        System.out.println("query: " + q.toString());
+        return q.getResultList();
     }
 
     // FILTERS ----------------------------------------
@@ -670,6 +812,8 @@ public class DataManager {
             entMan.getTransaction().begin();
             entMan.persist(object);
             entMan.getTransaction().commit();
+            //entMan.flush();
+            this.recreate();
         } catch (Exception e) {
             //Logger.getLogger(getClass().getName()).log(Level.SEVERE, "exception caught", e);
             if (entMan.getTransaction().isActive()) {
@@ -702,6 +846,9 @@ public class DataManager {
             entMan.getTransaction().begin();
             entMan.remove(object);
             entMan.getTransaction().commit();
+            //entMan.flush();
+            //entMan.clear();
+            this.recreate();
             //System.out.println("Committing");
         } catch (Exception e) {
             //System.out.println("Exception");
@@ -719,6 +866,8 @@ public class DataManager {
             entMan.getTransaction().begin();
             entMan.remove(entMan.find(Users.class, idUsr));
             entMan.getTransaction().commit();
+            entMan.flush();
+            entMan.clear();
         } catch (Exception e) {
             //Logger.getLogger(getClass().getName()).log(Level.SEVERE, "exception caught", e);
             if (entMan.getTransaction().isActive()) {
@@ -727,9 +876,9 @@ public class DataManager {
             throw new ServiceException(e.getMessage());
         }
     }
-    
-    public EntityManager getEntitiymanager(){
-        if(isOpen()){
+
+    public EntityManager getEntitiymanager() {
+        if (!isOpen()) {
             recreate();
         }
         return entMan;
@@ -739,13 +888,30 @@ public class DataManager {
         //System.out.println("Closing connection..");
         /*
         if (entMan.isOpen()) {
+        entMan.close();
+        //entMan = null;
+        }
+        if (emf.isOpen()) {
+        emf.close();
+        // emf = null;
+        }*/
+    }
+
+    public void closeIt() {
+        
+        
+        if (entMan.isOpen()) {
             entMan.close();
             //entMan = null;
         }
         if (emf.isOpen()) {
             emf.close();
             // emf = null;
-        }*/
+        }
+        Logger.getLogger(DataManager.class.getName()).log(
+                Level.INFO, 
+                "Closing connection. emf = {0} - entMan: {1}", 
+                new Object[]{emf.isOpen(), entMan.isOpen()});
     }
 
     public boolean isOpen() {
@@ -757,10 +923,10 @@ public class DataManager {
     }
 
     public void recreate() {
+        this.closeIt();
         emf = Persistence.createEntityManagerFactory("GeoshieldPU");
         entMan = emf.createEntityManager();
-        
         entMan.setFlushMode(FlushModeType.COMMIT);
+        Logger.getLogger(DataManager.class.getName()).log(Level.INFO, "DataManager recreated!");
     }
-    
 }

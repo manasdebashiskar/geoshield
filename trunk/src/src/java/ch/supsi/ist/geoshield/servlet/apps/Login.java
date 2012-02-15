@@ -31,6 +31,7 @@ package ch.supsi.ist.geoshield.servlet.apps;
 import ch.supsi.ist.geoshield.auth.AuthorityManager;
 import ch.supsi.ist.geoshield.data.Users;
 import ch.supsi.ist.geoshield.exception.UserException;
+import ch.supsi.ist.geoshield.shields.CacheFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import javax.servlet.ServletException;
@@ -62,11 +63,6 @@ public class Login extends HttpServlet {
         PrintWriter out = response.getWriter();
         Users usr = null;
         try {
-            /*
-            if (debug) {
-            System.out.println(" - Authorization header: " + auth);
-            }
-             */
             try {
                 usr = (Users) req.getSession().getAttribute("user");
             } catch (IllegalStateException e) {
@@ -151,7 +147,7 @@ public class Login extends HttpServlet {
                 if (debug) {
                     System.out.println(" - Try again.");
                 }
-                response.setHeader("WWW-Authenticate", "BASIC realm=\"Istituto Scienze della Terra\"");
+                response.setHeader("WWW-Authenticate", "BASIC realm=\""+req.getAttribute(CacheFilter.GEOSHIELD_REALM)+"\"");
                 response.sendError(response.SC_UNAUTHORIZED);
                 response.getWriter().close();
             }
