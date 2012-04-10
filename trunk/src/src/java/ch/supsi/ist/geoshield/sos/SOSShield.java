@@ -174,7 +174,7 @@ public class SOSShield implements Filter {
 
             String charset = "UTF-8";
             String body = new String(by, charset);
-            System.out.println(body);
+            //System.out.println(body);
 
             Document doc;
             try {
