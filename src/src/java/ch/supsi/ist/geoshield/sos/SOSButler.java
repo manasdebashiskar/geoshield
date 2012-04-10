@@ -34,9 +34,14 @@ import ch.supsi.ist.geoshield.exception.ServiceException;
 import ch.supsi.ist.geoshield.shields.RequestWrapper;
 import ch.supsi.ist.geoshield.shields.ResponseWrapper;
 import ch.supsi.ist.geoshield.utils.Utility;
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -76,24 +81,24 @@ public class SOSButler implements Filter {
         }
     }
 
-    private void handleGetRequest(RequestWrapper request, ResponseWrapper response) 
+    private void handleGetRequest(RequestWrapper request, ResponseWrapper response)
             throws IOException, ServiceException {
-        
+
         parser = new SOSParser();
         Object o = parser.parseGet(request);
         request.getSession().setAttribute(OGCParser.OBJREQ, o);
-        
+
         request.setAttribute(OGCParser.OBJREQ, o);
-        
+
     }
 
-    private void handlePostRequest(RequestWrapper request, ResponseWrapper response) 
+    private void handlePostRequest(RequestWrapper request, ResponseWrapper response)
             throws IOException, ServiceException {
 
         parser = new SOSParser();
         Object o = parser.parsePost(request);
         request.getSession().setAttribute(OGCParser.OBJREQ, o);
-        
+
         request.setAttribute(OGCParser.OBJREQ, o);
 
     }
@@ -101,9 +106,10 @@ public class SOSButler implements Filter {
     private void doAfterProcessing(RequestWrapper request, ResponseWrapper response)
             throws IOException, ServletException, ServiceException {
 
+        long now = System.currentTimeMillis();
         byte[] byts = (byte[]) request.getAttribute(OGCParser.BYTRES);
         String encoding = (String) request.getAttribute(OGCParser.ENCRES);
-
+        
         if (encoding != null) {
 
             if (encoding.equalsIgnoreCase("gzip")) {
@@ -111,33 +117,64 @@ public class SOSButler implements Filter {
                 // prepare a gzip stream
                 ByteArrayOutputStream compressedContent = new ByteArrayOutputStream();
                 GZIPOutputStream gzipstream = new GZIPOutputStream(compressedContent);
-                byte[] bytes = byts;
-                gzipstream.write(bytes);
+                
+                gzipstream.write(byts);
                 gzipstream.finish();
 
                 // get the compressed content
+                byts = null;
                 byts = compressedContent.toByteArray();
-                response.setContentLength(byts.length);
 
             } else if (encoding.equalsIgnoreCase("deflate")) {
 
                 ByteArrayOutputStream compressedContent = new ByteArrayOutputStream();
                 DeflaterOutputStream defstream = new DeflaterOutputStream(compressedContent);
-
+                
                 defstream.write(byts);
                 defstream.finish();
 
                 // get the compressed content
+                byts = null;
                 byts = compressedContent.toByteArray();
-                response.setContentLength(byts.length);
 
             }
         }
+        response.setContentLength(byts.length);
+        
 
         BufferedOutputStream out = new BufferedOutputStream(response.getOutputStream());
         out.write(byts);
         out.flush();
         out.close();
+        
+        /*
+        now = System.currentTimeMillis();
+
+        InputStream input = null;
+        BufferedOutputStream output = null;
+
+        try {
+            input = new ByteArrayInputStream(byts);
+            output = new BufferedOutputStream(response.getOutputStream());
+            byte[] buffer = new byte[8192];
+            for (int length = 0; (length = input.read(buffer)) > 0;) {
+                output.write(buffer, 0, length);
+            }
+        } finally {
+            if (output != null) {
+                try {
+                    output.close();
+                } catch (IOException logOrIgnore) {
+                }
+            }
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException logOrIgnore) {
+                }
+            }
+        }*/
+
 
     }
 
